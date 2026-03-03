@@ -16,7 +16,7 @@ actual class AudioPlayer actual constructor() {
             else -> return
         }
 
-        val path = NSBundle.mainBundle.pathForResource(fileName, "wav") ?: return
+        val path = NSBundle.mainBundle.pathForResource(fileName, "mp3") ?: return
         val url = NSURL.fileURLWithPath(path)
 
         val player = AVAudioPlayer(contentsOfURL = url, error = null)

@@ -1,12 +1,10 @@
 package org.example.project
 
 import TileViewModel
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,14 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,8 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
 
-import taal.composeapp.generated.resources.Res
-import taal.composeapp.generated.resources.compose_multiplatform
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.graphicsLayer
@@ -50,27 +43,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 import org.example.project.ui.theme.*
-import org.jetbrains.compose.resources.DrawableResource
-import taal.composeapp.generated.resources.drum
-import taal.composeapp.generated.resources.electric_guitar
-import taal.composeapp.generated.resources.flute
-import taal.composeapp.generated.resources.guitar
-import taal.composeapp.generated.resources.harmonium
-import taal.composeapp.generated.resources.piano
-import taal.composeapp.generated.resources.saxophone
-import taal.composeapp.generated.resources.violin
 
+// --- 1. THE MAIN APP SWITCHER ---
 @Composable
 @Preview
 fun App() {
+    // This state variable holds the name of the current screen
+    var currentScreen by remember { mutableStateOf("standards") }
+
     MaterialTheme {
-        MusicPadScreen()
+        // Switch based on the current screen state
+        when (currentScreen) {
+            "standards" -> {
+                // If the user clicks a button here, change state to "projects"
+                StandardsScreen(
+                    onNavigateToProjects = { currentScreen = "projects" }
+                )
+            }
+            "projects" -> {
+                // If user clicks New Project -> go to music.
+                // If they want to go back -> go to standards.
+                ProjectSelectionScreen(
+                    onNavigateToMusic = { currentScreen = "music_pad" },
+                    onNavigateBack = { currentScreen = "standards" }
+                )
+            }
+            "music_pad" -> {
+                // Pass a callback to TopBar so the user can go back
+                MusicPadScreen(
+                    onNavigateBack = { currentScreen = "projects" }
+                )
+            }
+        }
     }
 }
 
-
+// --- 2. THE MUSIC PAD SCREEN (Updated) ---
 @Composable
-fun MusicPadScreen(){
+fun MusicPadScreen(onNavigateBack: () -> Unit) {
     val viewModel = remember { TileViewModel() }
 
     var showBeatSelector by remember { mutableStateOf(false) }
@@ -89,7 +99,7 @@ fun MusicPadScreen(){
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundDark)
+            .background(DarkBackground)
     ) {
 
         Column(
@@ -98,7 +108,8 @@ fun MusicPadScreen(){
                 .padding(16.dp)
         ) {
 
-            TopBar()
+            // Pass the back action down to the TopBar
+            TopBar(onBackClick = onNavigateBack)
 
             Spacer(Modifier.height(16.dp))
 
@@ -113,7 +124,6 @@ fun MusicPadScreen(){
                 }
             )
         }
-
 
         BottomControls(
             modifier = Modifier
@@ -149,18 +159,17 @@ fun MusicPadScreen(){
     }
 }
 
-
-
+// --- 3. THE TOP BAR (Updated) ---
 @Composable
-fun TopBar()
-{
+fun TopBar(onBackClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ){
-        IconButton({}) {
-            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+        // Changed this to a back arrow and hooked up the click
+        IconButton(onClick = onBackClick) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
         }
         Box(
             modifier = Modifier
@@ -185,7 +194,6 @@ fun TopBar()
         }
     }
 }
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -213,7 +221,6 @@ fun SoundGrid(
                     color = Color.White,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
-
 
                 LazyHorizontalGrid(
                     rows = GridCells.Fixed(2),
@@ -246,7 +253,6 @@ fun SoundGrid(
         }
     }
 }
-
 
 @Composable
 fun SoundPad(
@@ -319,7 +325,3 @@ fun BottomControls(modifier: Modifier = Modifier) {
         }
     }
 }
-
-
-
-
