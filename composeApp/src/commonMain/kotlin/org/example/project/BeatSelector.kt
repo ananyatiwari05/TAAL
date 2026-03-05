@@ -63,7 +63,9 @@ fun BeatSelector(
                             .fillMaxWidth()
                             .clickable {
                                 selectedBeat = beat
-                                audioPlayer.playSound(beat.fileName)
+                                beat.fileName?.let {
+                                    audioPlayer.playSound(it)
+                                }
                             }
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -73,7 +75,9 @@ fun BeatSelector(
                             selected = selectedBeat == beat,
                             onClick = {
                                 selectedBeat = beat
-                                audioPlayer.playSound(beat.fileName)
+                                beat.fileName?.let {
+                                    audioPlayer.playSound(it)
+                                }
                             }
                         )
 

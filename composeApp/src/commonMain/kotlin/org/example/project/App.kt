@@ -39,6 +39,7 @@ import org.jetbrains.compose.resources.painterResource
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.Button
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
@@ -49,11 +50,14 @@ import kotlinx.coroutines.delay
 import org.example.project.ui.theme.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlin.time.Clock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 
 
 @Composable
-@Preview
-fun App() {
+fun App(audioPlayer: AudioPlayer) {
 
     var currentScreen by rememberSaveable { mutableStateOf("standards") }
     val beatEditorState = rememberBeatEditorState()
@@ -83,7 +87,8 @@ fun App() {
                     state = beatEditorState,
                     onNavigateBack = { currentScreen = "projects" },
                     audioImporter = audioImporter,
-                    tileViewModel = tileViewModel
+                    tileViewModel = tileViewModel,
+                    audioPlayer = audioPlayer
                 )
             }
         }
@@ -96,15 +101,19 @@ fun MusicPadScreen(
     state: BeatEditorState,
     onNavigateBack: () -> Unit,
     audioImporter: AudioImporter,
-    tileViewModel: TileViewModel
-) {
+    tileViewModel: TileViewModel,
+    audioPlayer: AudioPlayer
+){
 
     var showAudioEditor by remember { mutableStateOf(false) }
+    val drumEditorState = remember { DrumEditorState() }
+    var playing by remember { mutableStateOf(false) }
 
     var isEditorMode by remember { mutableStateOf(false) }
 
     var showBeatSelector by remember { mutableStateOf(false) }
     var showPianoEditor by remember { mutableStateOf(false) }
+    var showDrumEditor by remember { mutableStateOf(false) }
 
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedTile by remember { mutableStateOf<Tile?>(null) }
@@ -117,7 +126,7 @@ fun MusicPadScreen(
         )
     }
 
-    val audioPlayer = remember { AudioPlayer() }
+
 
     Box(
         modifier = Modifier
@@ -149,7 +158,12 @@ fun MusicPadScreen(
 
                         if (tile.instrument.name == "piano") {
                             showPianoEditor = true
-                        } else {
+                        }
+                        else if(tile.instrument.name == "drum")
+                        {
+                            showDrumEditor = true
+                        }
+                        else {
                             showBeatSelector = true
                         }
                     }
@@ -272,6 +286,53 @@ fun MusicPadScreen(
                 )
             }
         }
+        if(showDrumEditor && selectedTile != null)
+        {
+
+            Dialog(onDismissRequest = { showDrumEditor = false }) {
+
+                Column {
+
+                    DrumBeatEditor(
+                        state = drumEditorState,
+                        audioPlayer = audioPlayer,
+
+                        onSave = {
+
+                            tileViewModel.assignBeat(
+                                selectedCategory!!,
+                                selectedTile!!.id,
+                                Beat(
+                                    id = "custom_${Clock.System.now().toEpochMilliseconds()}",
+                                    name = "Custom Beat",
+                                    drumPattern = drumEditorState
+                                )
+                            )
+
+                            showDrumEditor = false
+                        },
+
+                        onClose = {
+                            showDrumEditor = false
+                        }
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+
+                        Button(onClick = { playing = true }) {
+                            Text("Play")
+                        }
+
+                        Button(onClick = { playing = false }) {
+                            Text("Stop")
+                        }
+                    }
+                }
+            }
+        }
 
         if (showAudioEditor && selectedTile != null) {
             Dialog(onDismissRequest = { showAudioEditor = false }) {
@@ -378,9 +439,24 @@ fun SoundGrid(
                             color = tile.instrument.color,
                             icon = painterResource(tile.instrument.iconRes),
                             onClick = {
-                                tile.beat?.let {
-                                    audioPlayer.playSound(it.fileName)
-                                } ?: audioPlayer.playSound(tile.instrument.name)
+
+                                val beat = tile.beat
+
+                                if (beat?.drumPattern != null) {
+
+                                    playDrumPattern(
+                                        state = beat.drumPattern,
+                                        audioPlayer = audioPlayer
+                                    )
+
+                                } else if (beat?.fileName != null) {
+
+                                    audioPlayer.playSound(beat.fileName)
+
+                                } else {
+
+                                    audioPlayer.playSound(tile.instrument.name)
+                                }
                             },
                             onLongPress = {
                                 onLongPress(category.title, tile)
@@ -477,3 +553,46 @@ fun BottomControls(
         }
     }
 }
+
+fun playDrumPattern(
+    state: DrumEditorState,
+    audioPlayer: AudioPlayer
+) {
+
+    CoroutineScope(Dispatchers.Default).launch {
+
+        val drumFiles = listOf(
+            "kick.wav",
+            "snare.wav",
+            "closedhat.wav",
+            "openhat.wav",
+            "tom.wav",
+            "crash.wav",
+            "ride.wav",
+            "clap.wav"
+        )
+
+        val bpm = 120
+        val stepDuration = 60000 / (bpm * 4)
+
+        repeat(state.cols) { step ->
+
+            state.grid.forEachIndexed { row, steps ->
+                if (steps[step]) {
+                    audioPlayer.playSound(drumFiles[row])
+                }
+            }
+
+            delay(stepDuration.toLong())
+        }
+    }
+}
+
+//@Preview
+//@Composable
+//fun AppPreview() {
+//
+//    val fakePlayer = AudioPlayer(AppContextHolder.context)
+//
+//    App(audioPlayer = fakePlayer)
+//}

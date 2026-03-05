@@ -9,25 +9,34 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
+
     lateinit var audioImporter: AudioImporter
+    lateinit var audioPlayer: AudioPlayer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
         AppContextHolder.context = applicationContext
         AudioImporter.currentActivity = this
 
 
+        audioPlayer = AudioPlayer()
+
+
+        audioPlayer.init(this)
+
         setContent {
-            App()
+            App(audioPlayer)
         }
     }
+
     override fun onActivityResult(
         requestCode: Int,
         resultCode: Int,
         data: Intent?
     ) {
         super.onActivityResult(requestCode, resultCode, data)
-
         AudioImporter().onActivityResult(requestCode, data)
     }
 }
@@ -35,5 +44,6 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+
+    App(audioPlayer = AudioPlayer())
 }
