@@ -54,6 +54,8 @@ kotlin {
             implementation(libs.sqldelight.android.driver)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.sqldelight.android.driver)
+
             implementation("com.google.firebase:firebase-auth-ktx:22.3.1")
             implementation("com.google.android.gms:play-services-auth:21.0.0")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
@@ -69,6 +71,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
 
             implementation(compose.materialIconsExtended)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines)
 
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
@@ -78,16 +82,12 @@ kotlin {
    //         }
 //            implementation("dev.gitlive:firebase-auth:1.10.3")
         }
-
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
 
-
         jvmMain.dependencies {
-
             implementation(compose.desktop.currentOs)
-
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.sqldelight.sqlite.driver)
         }
@@ -98,56 +98,41 @@ kotlin {
 }
 
 android {
-
     namespace = "org.example.project"
-
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-
         applicationId = "org.example.project"
-
         minSdk = libs.versions.android.minSdk.get().toInt()
-
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-
         versionCode = 1
         versionName = "1.0"
     }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-
     buildTypes {
-
         getByName("release") {
             isMinifyEnabled = false
         }
     }
-
     compileOptions {
-
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
 }
 
 dependencies {
-
     debugImplementation(libs.compose.uiTooling)
 }
 
 compose.desktop {
-
     application {
-
         mainClass = "org.example.project.MainKt"
 
         nativeDistributions {
-
             targetFormats(
                 TargetFormat.Dmg,
                 TargetFormat.Msi,
