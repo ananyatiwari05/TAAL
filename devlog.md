@@ -43,7 +43,7 @@ Bye :P
 Welcome back to our devlog, today is the first day of FOSSHACK. Here is what advances we made:
 - [Lavanya](https://www.github.com/Lavanya24R) made some prototype UI designs.
 - [Tanishq](https://github.com/Tanishq172006) and [Ananya](https://github.com/ananyatiwari05) worked on the inital setup for our project. Testing it on both Android and iOS respectively.
-- [Anshul](https://www.github.com/anshulbahdani) got familiar with Kotlin.
+- [Anshul](https://www.github.com/anshulbadhani) got familiar with Kotlin.
 
 Now, in today's meet we decided three things: What to do tomorrow, What will be our tech stack and what are the features we would have to implement before implementing our USP.
 
@@ -52,7 +52,7 @@ So, we decided that we will be working on Android studio (PandaOne) with Kotlin 
 For tomorrow. We are going to do this:
 - [Tanishq](https://github.com/Tanishq172006) and [Ananya](https://github.com/ananyatiwari05) will work on menus which won't be changing drastically, like new project screen or beginner/intermediate or advanced user prompt.
 - [Lavanya](https://www.github.com/Lavanya24R) will explore more ideas for UI and refine the existing designs.
-- [Anshul](https://www.github.com/anshulbahdani) will be figuring out AudioEngine part and what would we require.
+- [Anshul](https://www.github.com/anshulbadhani) will be figuring out AudioEngine part and what would we require.
 
 After a long chit chat after our meet we will be sleeping a good sleep after a tiring day :D
 
@@ -63,7 +63,7 @@ Welcome back to our devlog! Day 2 was focused on strengthening our foundation â€
 
 - [Tanishq](https://github.com/Tanishq172006) built the beats activity skeleton and implemented its base UI design.
 - [Ananya](https://github.com/ananyatiwari05) successfully set up Xcode on macOS for iOS development, added simulators, tested sample code to verify everything works properly, and cloned the project repository to ensure the project runs smoothly on iOS.
-- [Anshul](https://www.github.com/anshulbahdani) worked on researching the Audio Engine architecture, focusing on: Smooth task scheduling, efficient audio playback handling and seamless application of effects like reverb, flanger etc.
+- [Anshul](https://www.github.com/anshulbadhani) worked on researching the Audio Engine architecture, focusing on: Smooth task scheduling, efficient audio playback handling and seamless application of effects like reverb, flanger etc.
 - [Lavanya](https://www.github.com/Lavanya24R) designed UI layouts for laptop/PC, optimized mobile UI, explored FL Studio for inspiration, and studied other music apps to refine the instruments interface and overall UX.
 
  We decided that instead of building the Audio Engine components from scratch(not feasible within hackathon constraints) we will be using open-source technologies which will be more scalable and realistic. Therefore, the best primary option would be Media3, with FFmpeg as a fallback if required. For the UI, we will keep the paint and delete features in our app just like FL Studio, decided on what click does what for beats and keep horizontal mode as default for good instrument UI.
@@ -71,7 +71,7 @@ Welcome back to our devlog! Day 2 was focused on strengthening our foundation â€
 ### For Tomorrow
 - [Tanishq](https://github.com/Tanishq172006) will implement the second canvas screen, refactor and clean up the beats activity code
 - [Ananya](https://github.com/ananyatiwari05) will work on the first two activity pages of the app (initial screens flow).
-- [Anshul](https://www.github.com/anshulbahdani) will research on how to integrate Audio Engine libraries into our CMP app architecture.
+- [Anshul](https://www.github.com/anshulbadhani) will research on how to integrate Audio Engine libraries into our CMP app architecture.
 - [Lavanya](https://www.github.com/Lavanya24R) will clone the repository and start implementing UI add-ons and improvements into the project
 
 Day 2 gave us the base UI design with set up on different platforms. 
@@ -110,13 +110,13 @@ Happy Holi<3. Today was a mix of colors and code. We did play Holi (priorities b
 
 - [Tanishq](https://github.com/Tanishq172006) Added the canvas and optimized its behavior across platforms. Implemented tiles system and introduced a long-press feature on piano tiles which opens a dedicated piano UI. Added persistance throughout the OS's.
 - [Ananya](https://github.com/ananyatiwari05) Researched the Brush feature inspired by FL Studioâ€™s piano roll workflow. Explored grid generation logic and piano roll grid structuring for better note placement precision.
-- [Anshul](https://www.github.com/anshulbahdani) Explored different audio engine options suitable for low-latency music production apps and compared their integration feasibility with Kotlin Multiplatform.
+- [Anshul](https://www.github.com/anshulbadhani) Explored different audio engine options suitable for low-latency music production apps and compared their integration feasibility with Kotlin Multiplatform.
 - [Lavanya](https://www.github.com/Lavanya24R) Researched Room database, understanding its setup, dependencies, annotations, and how it can be structured cleanly within our project architecture.
 
 For tomorrow. We plan to:
 - [Tanishq](https://github.com/Tanishq172006) Implement long-press audio logic for instrument tiles. Add highlight color inversions. Introduce dropdowns on the second screen to allow instrument selection and tile number assignment.
 - [Ananya](https://github.com/ananyatiwari05) Research database strategies- Firebase Authentication for user handling, SQLite for local storage, and deeper study of Room in Kotlin app development.
-- [Anshul](https://www.github.com/anshulbahdani) Research and start implementing JUCE (or another suitable low-latency audio engine) and test basic sound output integration within the app.
+- [Anshul](https://www.github.com/anshulbadhani) Research and start implementing JUCE (or another suitable low-latency audio engine) and test basic sound output integration within the app.
 - [Lavanya](https://www.github.com/Lavanya24R) Begin implementing Room database in the actual app structure.
 
 Colorful and productive day ,, tataaa >.< 
@@ -179,7 +179,7 @@ Welcome back to our devlog! Day 7 was mainly about UI fixes, some funtionality a
 
 - [Tanishq](https://github.com/Tanishq172006) fixed the issues in existing UI. Added code for each beat tile to have its own beat entity and save the beat in the tile created by us. Created the midi and piano UI. Researched about general song fonts and got an open source technology for generating each piano note. Implemented the technology for jvmMain(Desktop app).
 - [Ananya](https://github.com/ananyatiwari05) made a project on firebase, researched and got a repository on how to use it cross platform. Set up email and password signup and login for our app along with Google OAuth authentication. Added a profile icon in the UI and designed the login page. Made the authentication interface in commonMain and implemented it in androidMain and iOSMain.
-- [Anshul](https://www.github.com/anshulbahdani) watched a youtube video and set up a submodule which would generate CMake, C and C++ files automatically and help us in making our Audio Engine but later, on further research, got to know that Java Native Interface(JNI) would be better for our Audio Engine. Therefore, read more about JNI networking and learned how to implement it using expect and actual classes.
+- [Anshul](https://www.github.com/anshulbadhani) watched a youtube video and set up a submodule which would generate CMake, C and C++ files automatically and help us in making our Audio Engine but later, on further research, got to know that Java Native Interface(JNI) would be better for our Audio Engine. Therefore, read more about JNI networking and learned how to implement it using expect and actual classes.
 - [Lavanya](https://www.github.com/Lavanya24R) studied and built the folder structure for SQLDelight and found its most stable version. Made the expect class in the commonMain and actual classes in androidMain, iOSMain etc. to implement it. Wrote queries for the database and studied the code to see the places from where they would be called.
 
  From UI to music, to database to engines(not literal ones again;)) we worked on all the main topics revolving around our app. (u.u)
@@ -187,7 +187,7 @@ Welcome back to our devlog! Day 7 was mainly about UI fixes, some funtionality a
 ### For Tomorrow
 - [Tanishq](https://github.com/Tanishq172006) will make dialogue boxes for other instruments as well, look into the issues where our app is crashing, add the feature to highlight a tile if in use and add the metronome feature. Help Anshul in JNI if it posses a frustrative hairpull for him(>u<).
 - [Ananya](https://github.com/ananyatiwari05) will implement the firebase database using rest APIs for webMain, finish login page UI, thoroughly test the working of authentication and will research about cloud storage.
-- [Anshul](https://www.github.com/anshulbahdani) will continue the linking process of JNI in our app using expect and actual classes.
+- [Anshul](https://www.github.com/anshulbadhani) will continue the linking process of JNI in our app using expect and actual classes.
 - [Lavanya](https://www.github.com/Lavanya24R) will design the logo of our app and write code to send and receive data to/from the database. Test it with some sample data. 
 
 Day 7 added more functionalities to our app and made us proceed further towards our goal making us sleep along with snores.zzZZ
