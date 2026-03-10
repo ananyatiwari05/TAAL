@@ -58,10 +58,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import pianoNotes
-import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
-
-
 @Composable
 fun App(
     audioPlayer: AudioPlayer,
@@ -109,14 +106,14 @@ fun App(
                     }
                 }
 
-//                ProfileIcon(
-//                    modifier = Modifier
-//                        .align(Alignment.TopCenter)
-//                        .padding(10.dp),
-//                    onClick = {
-//                        showAuthScreen = true
-//                    }
-//                )
+                ProfileIcon(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(10.dp),
+                    onClick = {
+                        showAuthScreen = true
+                    }
+                )
 
                 if (showAuthScreen) {
                     Dialog(onDismissRequest = { showAuthScreen = false }) {
@@ -147,7 +144,6 @@ fun MusicPadScreen(
     sequencer: StepSequencer,
     onProfileClick: () -> Unit
 ){
-
     var showAudioEditor by remember { mutableStateOf(false) }
     var drumEditorState by remember { mutableStateOf<DrumEditorState?>(null) }
     var playing by remember { mutableStateOf(false) }
@@ -168,21 +164,8 @@ fun MusicPadScreen(
         )
     }
 
-
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DarkBackground)
-    ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-
-
+    Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             TopBar(
                 onBackClick = onNavigateBack,
                 metronome = metronome,
@@ -214,19 +197,15 @@ fun MusicPadScreen(
                         if (tile.instrument.name == "piano") {
                             pianoEditorState = tile.beat?.pianoPattern ?: PianoEditorState()
                             showPianoEditor = true
-                        }
-                        else if (tile.instrument.name == "drum") {
+                        } else if (tile.instrument.name == "drum") {
                             drumEditorState = tile.beat?.drumPattern ?: DrumEditorState()
                             showDrumEditor = true
-                        }
-                        else {
+                        } else {
                             showBeatSelector = true
                         }
                     }
                 )
-
             } else {
-
                 BeatEditorScreen(
                     categories = tileViewModel.categories,
                     state = state,
@@ -249,68 +228,26 @@ fun MusicPadScreen(
         BottomControls(
             isEditorMode = isEditorMode,
             onToggle = { isEditorMode = !isEditorMode },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 20.dp)
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp)
         )
 
         if (showBeatSelector && selectedTile != null) {
             Dialog(onDismissRequest = { showBeatSelector = false }) {
-
-                Column(
-                    modifier = Modifier
-                        .background(Color.White, RoundedCornerShape(12.dp))
-                        .padding(16.dp)
-                ) {
-
+                Column(modifier = Modifier.background(Color.White, RoundedCornerShape(12.dp)).padding(16.dp)) {
                     BeatSelector(
                         beats = beats,
                         audioPlayer = audioPlayer,
                         onSaveToTile = { beat ->
-                            tileViewModel.assignBeat(
-                                selectedCategory!!,
-                                selectedTile!!.id,
-                                beat
-                            )
+                            tileViewModel.assignBeat(selectedCategory!!, selectedTile!!.id, beat)
                             showBeatSelector = false
                         },
                         onCreateNewTile = { beat ->
-                            tileViewModel.addTile(
-                                selectedCategory!!,
-                                selectedTile!!,
-                                beat
-                            )
+                            tileViewModel.addTile(selectedCategory!!, selectedTile!!, beat)
                             showBeatSelector = false
                         },
-
                         onImportAudio = {
                             audioImporter.pickAudio { path ->
                                 tileViewModel.assignBeat(selectedCategory!!, selectedTile!!.id, Beat("imported", "Imported Audio", path))
-                                showBeatSelector = false
-                            }
-                        },
-
-                        onDismiss = { showBeatSelector = false }
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        "+ Import Audio",
-                        color = Color.Blue,
-                        modifier = Modifier.clickable {
-
-                            audioImporter.pickAudio { path ->
-
-                                tileViewModel.assignBeat(
-                                    selectedCategory!!,
-                                    selectedTile!!.id,
-                                    Beat(
-                                        id = "imported",
-                                        name = "Imported Audio",
-                                        fileName = path
-                                    )
-                                )
-
                                 showBeatSelector = false
                             }
                         },
@@ -325,13 +262,7 @@ fun MusicPadScreen(
 
         if (showPianoEditor && selectedTile != null) {
             Dialog(onDismissRequest = { showPianoEditor = false }) {
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.95f)
-                        .fillMaxHeight(0.8f)
-                ) {
-
+                Box(modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.8f)) {
                     PianoRollEditor(
                         state = pianoEditorState ?: PianoEditorState(),
                         audioPlayer = audioPlayer,
@@ -670,4 +601,8 @@ fun BottomControls(
             )
         }
     }
+
 }
+
+
+
