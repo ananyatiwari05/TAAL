@@ -279,3 +279,52 @@ For tomorrow:
     - Start creating the REST API for authentication.
 
     welp college started what else lavanya and ananya came back to hostel so we have now a chance for offline meets 🔥 , but now daily work will be way more fun and welp gradle 😢 kills me atm but i wont give up and we all will fight and comeback stronger 
+
+
+
+    ## Devlog #9
+*10-03-2026* ~by [Tanishq Pandey](https://github.com/Tanishq172006)
+
+Today was the first day of college after the Holi break. ANDDD we had our first offline meet today. We decided to meet after our classes, but we bumped into each other before that and were sooo excited to see everyone!
+
+Before the meeting we even went outside the campus and hung out together for a bit. IT WAS FUN!
+
+Now coming to the real stuff.
+
+The biggest achievement of the day: [Tanishq](https://github.com/Tanishq172006), after fighting with Gradle for two days straight, FINALLYYY fixed the Gradle issues.  
+(It was a single line of code. Bruh!)
+
+[Lavanya](https://www.github.com/Lavanya24R) made our cool logo while [Ananya](https://github.com/ananyatiwari05) and [Anshul](https://www.github.com/anshulbadhani) were suggesting different design ideas and improvements.
+
+[Ananya](https://github.com/ananyatiwari05) finally fixed the Firebase authentication issue and  
+[Anshul](https://www.github.com/anshulbadhani) continued exploring the **miniaudio API**.
+
+After coming back to our respective homes, we had another meet and did some more work.
+
+[Anshul](https://www.github.com/anshulbadhani) implemented a C function that takes the filepath of an audio file and plays the sound from the actual files instead of hardcoding them.
+
+[Lavanya](https://www.github.com/Lavanya24R) and [Tanishq](https://github.com/Tanishq172006) fixed the merge conflicts on the GitHub repositories.
+
+---
+
+### For tomorrow
+
+- [Anshul](https://www.github.com/anshulbadhani)
+    - Work further on the audio engine API.
+
+- [Ananya](https://github.com/ananyatiwari05)
+    - Implement `AuthRepositoryImpl` for iOS.
+    - Fix remaining dependency issues.
+
+- [Lavanya](https://www.github.com/Lavanya24R)
+    - Pull the latest changes.
+    - Start working on SQLDelight integration.
+
+- [Tanishq](https://github.com/Tanishq172006)
+    - Work on making other UIs for other tiles
+    - Continue UI improvements and debugging.
+    - Start working on DSP for realtime wave formation.
+    - fix pipelines for the importer.
+
+
+Today was a hectic yet fruitful day, we achieved alot today , learnt alot today and moving forward with our heads up high!! 🚀
