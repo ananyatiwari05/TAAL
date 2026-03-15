@@ -282,7 +282,7 @@ For tomorrow:
 
 
 ## Devlog #9
-*10-03-2026* ~by [Tanishq Pandey](https://github.com/Tanishq172006)
+*09-03-2026* ~by [Tanishq Pandey](https://github.com/Tanishq172006)
 
 Today was the first day of college after the Holi break. ANDDD we had our first offline meet today. We decided to meet after our classes, but we bumped into each other before that and were sooo excited to see everyone!
 
@@ -327,3 +327,25 @@ After coming back to our respective homes, we had another meet and did some more
 
 
 Today was a hectic yet fruitful day, we achieved alot today , learnt alot today and moving forward with our heads up high!! 🚀
+
+
+
+## Devlog #10
+*10-03-2026* ~by [Lavanya Rastogi](https://www.github.com/Lavanya24R)
+
+Welcome back to our devlog! Day 10 was mainly about 
+- [Tanishq](https://github.com/Tanishq172006) added the code for timer for metronome and reset. Fixed UI on the beats page. Searched for the audio engine bridge in cpp and researched for how we can proceed with the app
+- [Ananya](https://github.com/ananyatiwari05) set up firebase authentication for android and iOS but could not test it because of build failures and compatibility issues.
+- [Anshul](https://www.github.com/anshulbadhani) worked on the cpp audio engine, and found solutions on how to do it. Read miniaudio documentation.
+- [Lavanya](https://www.github.com/Lavanya24R) merged the main and diverged branch which was created due to git commit and git push before git pull and looked for instrument chords .wav files.
+
+That was that, and now for the next episode we have:
+
+### For Tomorrow
+- [Tanishq](https://github.com/Tanishq172006) will find out how we can finish the app before March 22 before our T2 examinations and will work on the CPP audio engine with Anshul
+- [Ananya](https://github.com/ananyatiwari05) will find the saxophone beats and research whether we can convert the piano beats into saxophone beats.
+- [Anshul](https://www.github.com/anshulbadhani) will work on the C code related to the audio engine and add a few check in the existing function to ensure their smooth working. 
+- [Lavanya](https://www.github.com/Lavanya24R) will refractor the code for database, add more queries and tables and make it more efficient.
+
+Day 8 added more functionalities to our app and made us proceed further towards our goal making us sleep along with snores.zzZZ
+
