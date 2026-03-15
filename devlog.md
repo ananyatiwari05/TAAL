@@ -347,5 +347,5 @@ That was that, and now for the next episode we have:
 - [Anshul](https://www.github.com/anshulbadhani) will work on the C code related to the audio engine and add a few check in the existing function to ensure their smooth working. 
 - [Lavanya](https://www.github.com/Lavanya24R) will refractor the code for database, add more queries and tables and make it more efficient.
 
-Day 8 added more functionalities to our app and made us proceed further towards our goal making us sleep along with snores.zzZZ
+Day 10 added more functionalities to our app and made us proceed further towards our goal making us sleep along with snores.zzZZ
 
