@@ -29,7 +29,7 @@ fun main() = application {
                 override suspend fun firebaseAuthWithGoogle(idToken: String) =
                     Result.success(Unit)
 
-                override fun signOut() {}
+                override suspend fun signOut() {}
 
                 override fun getCurrentUserId(): String? = "desktop_user"
             }

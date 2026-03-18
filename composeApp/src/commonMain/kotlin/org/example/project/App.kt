@@ -52,13 +52,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.delay
 import org.example.project.ui.theme.*
+import org.jetbrains.compose.resources.painterResource
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import pianoNotes
+import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
+
+
 @Composable
 fun App(
     audioPlayer: AudioPlayer,
@@ -106,15 +110,6 @@ fun App(
                     }
                 }
 
-                ProfileIcon(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(10.dp),
-                    onClick = {
-                        showAuthScreen = true
-                    }
-                )
-
                 if (showAuthScreen) {
                     Dialog(onDismissRequest = { showAuthScreen = false }) {
                         LoginSignupScreen(
@@ -146,7 +141,6 @@ fun MusicPadScreen(
 ){
     var showAudioEditor by remember { mutableStateOf(false) }
     var drumEditorState by remember { mutableStateOf<DrumEditorState?>(null) }
-    var playing by remember { mutableStateOf(false) }
     var pianoEditorState by remember { mutableStateOf<PianoEditorState?>(null) }
     var metronomeRunning by remember { mutableStateOf(false) }
     var isEditorMode by remember { mutableStateOf(false) }
@@ -251,10 +245,8 @@ fun MusicPadScreen(
                                 showBeatSelector = false
                             }
                         },
-
                         onDismiss = { showBeatSelector = false }
                     )
-
                     Spacer(Modifier.height(16.dp))
                 }
             }
@@ -266,9 +258,7 @@ fun MusicPadScreen(
                     PianoRollEditor(
                         state = pianoEditorState ?: PianoEditorState(),
                         audioPlayer = audioPlayer,
-
                         onSave = {
-
                             tileViewModel.assignBeat(
                                 selectedCategory!!,
                                 selectedTile!!.id,
@@ -278,10 +268,8 @@ fun MusicPadScreen(
                                     pianoPattern = pianoEditorState
                                 )
                             )
-
                             showPianoEditor = false
                         },
-
                         onClose = { showPianoEditor = false }
                     )
                 }
@@ -295,7 +283,6 @@ fun MusicPadScreen(
                         state = drumEditorState!!,
                         audioPlayer = audioPlayer,
                         onSave = {
-
                             tileViewModel.assignBeat(
                                 selectedCategory!!,
                                 selectedTile!!.id,
@@ -305,13 +292,9 @@ fun MusicPadScreen(
                                     drumPattern = drumEditorState!!
                                 )
                             )
-
                             showDrumEditor = false
                         },
-
-                        onClose = {
-                            showDrumEditor = false
-                        }
+                        onClose = { showDrumEditor = false }
                     )
                 }
             }
@@ -320,18 +303,14 @@ fun MusicPadScreen(
         if (showAudioEditor && selectedTile != null) {
             Dialog(onDismissRequest = { showAudioEditor = false }) {
                 AudioEditor(
-                    fileName = selectedTile!!.beat?.fileName
-                        ?: selectedTile!!.instrument.name,
-
+                    fileName = selectedTile!!.beat?.fileName ?: selectedTile!!.instrument.name,
                     onClose = { showAudioEditor = false },
                     onSave = { fileName ->
-
                         tileViewModel.assignBeat(
                             selectedCategory!!,
                             selectedTile!!.id,
                             Beat("edited", "Edited Beat", fileName)
                         )
-
                         showAudioEditor = false
                     }
                 )
@@ -348,45 +327,54 @@ fun TopBar(
     metronomeRunning: Boolean,
     onToggleMetronome: () -> Unit
 ) {
+    val elapsedTime by metronome.elapsedTime.collectAsState()
+
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
-    ){
+    ) {
+
         IconButton(onClick = onBackClick) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+            Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
         }
+
         Box(
             modifier = Modifier
+                .padding(horizontal = 8.dp)
                 .background(Color.DarkGray, RoundedCornerShape(8.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp)
         ) {
             Text(
-                text = "00:00:00",
+                text = formatTime(elapsedTime),
                 color = Color.White,
                 fontWeight = FontWeight.Medium
             )
         }
+
         Row(
-            modifier = Modifier.fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
+            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
+
             IconButton({}) { Icon(Icons.Default.Mic, null, tint = Color.White) }
+
             IconButton(onClick = onToggleMetronome) {
                 Icon(
-                    imageVector = Icons.Default.Speed,
-                    contentDescription = "Metronome",
+                    Icons.Default.Speed,
+                    "Metronome",
                     tint = if (metronomeRunning) Color.Green else Color.White
                 )
             }
+
             IconButton({}) { Icon(Icons.Default.VolumeUp, null, tint = Color.White) }
+
             IconButton({}) { Icon(Icons.Default.Menu, null, tint = Color.White) }
-            IconButton(
-                onClick = onProfileClick
-            ) {
+
+            IconButton(onClick = onProfileClick) {
                 Icon(
-                    imageVector = Icons.Filled.AccountCircle,
-                    contentDescription = "Profile",
+                    Icons.Filled.AccountCircle,
+                    "Profile",
                     tint = Color.White,
                     modifier = Modifier.size(32.dp)
                 )
@@ -407,14 +395,13 @@ fun SoundGrid(
 ){
     var activeTiles by remember { mutableStateOf(setOf<Int>()) }
     val currentStep by metronome.step.collectAsState()
+    val scope = rememberCoroutineScope()
 
-    LazyColumn(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(24.dp)) {
 
         items(categories.size) { categoryIndex ->
             val category = categories[categoryIndex]
+
             Column {
 
                 Text(
@@ -428,35 +415,32 @@ fun SoundGrid(
                     rows = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
+                    modifier = Modifier.fillMaxWidth().height(200.dp)
                 ) {
+
                     items(category.tiles.size) { index ->
                         val tile = category.tiles[index]
                         val column = index / 2
+
                         SoundPad(
                             color = tile.instrument.color,
                             icon = painterResource(tile.instrument.iconRes),
                             isActive = tile.id in activeTiles,
                             isPlayhead = column == currentStep,
                             onClick = {
-                                activeTiles = activeTiles + tile.id
 
+                                activeTiles = activeTiles + tile.id
                                 val beat = tile.beat
 
-                                CoroutineScope(Dispatchers.Main).launch {
+                                scope.launch {
 
                                     if (beat?.pianoPattern != null) {
-
                                         sequencer.addPianoPattern(beat.pianoPattern)
 
                                     } else if (beat?.drumPattern != null) {
-
                                         sequencer.addDrumPattern(beat.drumPattern)
 
                                     } else if (beat?.fileName != null) {
-
                                         audioPlayer.playSound(beat.fileName)
 
                                     } else {
@@ -471,28 +455,23 @@ fun SoundGrid(
 
                                     val duration = when {
                                         beat?.pianoPattern != null -> {
-                                            val bpm = 120
-                                            val stepDuration = 60000 / (bpm * 4)
+                                            val stepDuration = 60000L / (metronome.bpm * 4)
                                             stepDuration * beat.pianoPattern.cols
                                         }
 
                                         beat?.drumPattern != null -> {
-                                            val bpm = 120
-                                            val stepDuration = 60000 / (bpm * 4)
+                                            val stepDuration = 60000L / (metronome.bpm * 4)
                                             stepDuration * beat.drumPattern.cols
                                         }
 
-                                        else -> 400
+                                        else -> 400L
                                     }
 
-                                    delay(duration.toLong())
-
+                                    delay(duration)
                                     activeTiles = activeTiles - tile.id
                                 }
                             },
-                            onLongPress = {
-                                onLongPress(category.title, tile)
-                            }
+                            onLongPress = { onLongPress(category.title, tile) }
                         )
                     }
                 }
@@ -511,6 +490,7 @@ fun SoundPad(
     onLongPress: () -> Unit
 ){
     var pressed by remember { mutableStateOf(false) }
+
     val animatedColor by animateColorAsState(
         if (isActive) Color.White else color,
         label = ""
@@ -524,10 +504,7 @@ fun SoundPad(
     Box(
         modifier = Modifier
             .aspectRatio(1f)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
+            .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(RoundedCornerShape(20.dp))
             .background(
                 when {
@@ -542,13 +519,8 @@ fun SoundPad(
                 RoundedCornerShape(20.dp)
             )
             .combinedClickable(
-                onClick = {
-                    pressed = true
-                    onClick()
-                },
-                onLongClick = {
-                    onLongPress()
-                }
+                onClick = { pressed = true; onClick() },
+                onLongClick = { onLongPress() }
             )
             .padding(8.dp),
         contentAlignment = Alignment.Center
@@ -581,8 +553,7 @@ fun BottomControls(
         tonalElevation = 8.dp
     ) {
         Row(
-            modifier = Modifier
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(32.dp)
         ) {
 
@@ -601,8 +572,16 @@ fun BottomControls(
             )
         }
     }
-
 }
 
+fun formatTime(seconds: Long): String {
+    val hrs = seconds / 3600
+    val mins = (seconds % 3600) / 60
+    val secs = seconds % 60
 
+    val h = hrs.toString().padStart(2, '0')
+    val m = mins.toString().padStart(2, '0')
+    val s = secs.toString().padStart(2, '0')
 
+    return "$h:$m:$s"
+}

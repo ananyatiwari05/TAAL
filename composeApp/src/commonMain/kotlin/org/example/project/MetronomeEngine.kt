@@ -3,36 +3,63 @@ package org.example.project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeSource
 
 class MetronomeEngine {
 
     private var job: Job? = null
+    private var timerJob: Job? = null
+    private var startMark = TimeSource.Monotonic.markNow()
 
     var bpm = 120
 
     private val _step = MutableStateFlow(0)
     val step: StateFlow<Int> = _step
 
+    private val _elapsedTime = MutableStateFlow(0L)
+    val elapsedTime: StateFlow<Long> = _elapsedTime
+
     fun start() {
 
         if (job != null) return
 
-        job = CoroutineScope(Dispatchers.Default).launch {
+        startMark = TimeSource.Monotonic.markNow()
 
-            val stepDuration = 60000 / (bpm * 4)
+        val scope = CoroutineScope(Dispatchers.Default)
 
-            while (true) {
 
+        job = scope.launch {
+
+            val stepDuration = (60000L / (bpm * 4)).milliseconds
+
+            while (isActive) {
                 _step.value = (_step.value + 1) % 16
+                delay(stepDuration)
+            }
+        }
 
-                delay(stepDuration.toLong())
+
+        timerJob = scope.launch {
+
+            while (isActive) {
+
+                _elapsedTime.value =
+                    startMark.elapsedNow().inWholeSeconds
+
+                delay(200)
             }
         }
     }
 
     fun stop() {
         job?.cancel()
+        timerJob?.cancel()
+
         job = null
+        timerJob = null
+
         _step.value = 0
+        _elapsedTime.value = 0
     }
 }
