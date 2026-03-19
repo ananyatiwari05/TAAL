@@ -3,12 +3,18 @@ package org.example.project
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
+import android.media.MediaPlayer
+import android.net.Uri
 
 actual class AudioPlayer(context: Context) {
 
     private val soundPool: SoundPool
     private val sounds = mutableMapOf<String, Int>()
     private val appContext = context.applicationContext
+    private var volume: Float = 1f
+
+
+    private var mediaPlayer: MediaPlayer? = null
 
     init {
 
@@ -29,12 +35,31 @@ actual class AudioPlayer(context: Context) {
 
         soundPool.play(
             id,
-            1f,
-            1f,
+            volume,
+            volume,
             1,
             0,
             1f
         )
+    }
+
+
+    actual fun playImported(uri: String) {
+
+        stopImported()
+
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(appContext, Uri.parse(uri))
+            prepare()
+            setVolume(volume, volume)
+            start()
+        }
+    }
+
+
+    fun stopImported() {
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 
     private fun loadSound(name: String): Int {
@@ -56,5 +81,11 @@ actual class AudioPlayer(context: Context) {
         sounds[name] = soundId
 
         return soundId
+    }
+    actual fun setVolume(newVolume: Float) {
+        volume = newVolume
+
+
+        mediaPlayer?.setVolume(volume, volume)
     }
 }

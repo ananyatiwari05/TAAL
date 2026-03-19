@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
@@ -45,6 +46,7 @@ import org.jetbrains.compose.resources.painterResource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.Slider
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
@@ -58,6 +60,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import org.example.project.auth.AuthRepository
 import pianoNotes
 import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
@@ -66,12 +69,13 @@ import kotlin.time.ExperimentalTime
 @Composable
 fun App(
     audioPlayer: AudioPlayer,
-    authRepository: org.example.project.auth.AuthRepository,
+    authRepository: AuthRepository,
+    audioImporter: AudioImporter,
+    audioExporter: AudioExporter,
     onGoogleSignInClick: () -> Unit
-) {
+){
     var currentScreen by rememberSaveable { mutableStateOf("standards") }
     val beatEditorState = rememberBeatEditorState()
-    val audioImporter = remember { AudioImporter() }
     val tileViewModel = remember { TileViewModel() }
     val metronome = remember { MetronomeEngine() }
     val sequencer = remember { StepSequencer(metronome, audioPlayer) }
@@ -91,6 +95,8 @@ fun App(
 
                     "projects" -> {
                         ProjectSelectionScreen(
+                            tileViewModel = tileViewModel,
+                            audioPlayer = audioPlayer,
                             onNavigateToMusic = { currentScreen = "music_pad" },
                             onNavigateBack = { currentScreen = "standards" }
                         )
@@ -105,7 +111,8 @@ fun App(
                             audioPlayer = audioPlayer,
                             metronome = metronome,
                             sequencer = sequencer,
-                            onProfileClick = { showAuthScreen = true }
+                            onProfileClick = { showAuthScreen = true },
+                            audioExporter = audioExporter
                         )
                     }
                 }
@@ -137,7 +144,8 @@ fun MusicPadScreen(
     audioPlayer: AudioPlayer,
     metronome: MetronomeEngine,
     sequencer: StepSequencer,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    audioExporter :AudioExporter
 ){
     var showAudioEditor by remember { mutableStateOf(false) }
     var drumEditorState by remember { mutableStateOf<DrumEditorState?>(null) }
@@ -149,6 +157,25 @@ fun MusicPadScreen(
     var showDrumEditor by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedTile by remember { mutableStateOf<Tile?>(null) }
+    var showRecorder by remember { mutableStateOf(false) }
+    val recorder = remember { VoiceRecorder() }
+    val currentStep by metronome.step.collectAsState()
+    var swing by remember { mutableStateOf(0f) }
+    var swingEnabled by remember { mutableStateOf(false) }
+
+    val onExport = {
+        val path = "/tmp/beat_${Clock.System.now().toEpochMilliseconds()}.wav"
+
+        audioExporter.exportBeat(
+            state = state,
+            categories = tileViewModel.categories,
+            bpm = metronome.bpm,
+            outputPath = path
+        )
+
+        println("EXPORTED: $path")
+    }
+
 
     val beats = remember {
         listOf(
@@ -173,49 +200,62 @@ fun MusicPadScreen(
                     } else {
                         metronome.stop()
                     }
-                }
+                },
+                audioPlayer = audioPlayer,
+                onMicClick = {
+                    showRecorder = true
+                },
+                swing = swing,
+                onSwingChange = {
+                    swing = it
+                    metronome.swing = it
+                },
+                onExportClick = onExport
             )
-
             Spacer(Modifier.height(16.dp))
 
-            if (isEditorMode) {
-                SoundGrid(
-                    categories = tileViewModel.categories,
-                    audioPlayer = audioPlayer,
-                    modifier = Modifier.weight(1f),
-                    metronome = metronome,
-                    sequencer = sequencer,
-                    onLongPress = { categoryTitle, tile ->
-                        selectedCategory = categoryTitle
-                        selectedTile = tile
-                        if (tile.instrument.name == "piano") {
-                            pianoEditorState = tile.beat?.pianoPattern ?: PianoEditorState()
-                            showPianoEditor = true
-                        } else if (tile.instrument.name == "drum") {
-                            drumEditorState = tile.beat?.drumPattern ?: DrumEditorState()
-                            showDrumEditor = true
-                        } else {
-                            showBeatSelector = true
+            key(isEditorMode) {
+                if (isEditorMode) {
+                    SoundGrid(
+                        categories = tileViewModel.categories,
+                        audioPlayer = audioPlayer,
+                        modifier = Modifier.fillMaxSize(),
+                        metronome = metronome,
+                        sequencer = sequencer,
+                        onLongPress = { categoryTitle, tile ->
+                            selectedCategory = categoryTitle
+                            selectedTile = tile
+                            if (tile.instrument.name == "piano") {
+                                pianoEditorState = tile.beat?.pianoPattern ?: PianoEditorState()
+                                showPianoEditor = true
+                            } else if (tile.instrument.name == "drum") {
+                                drumEditorState = tile.beat?.drumPattern ?: DrumEditorState()
+                                showDrumEditor = true
+                            } else {
+                                showBeatSelector = true
+                            }
                         }
-                    }
-                )
-            } else {
-                BeatEditorScreen(
-                    categories = tileViewModel.categories,
-                    state = state,
-                    modifier = Modifier.weight(1f),
-                    onTileLongPress = { instrumentIndex, stepIndex ->
-                        val category = tileViewModel.categories[instrumentIndex]
-                        val tile = category.tiles[stepIndex]
-                        selectedCategory = category.title
-                        selectedTile = tile
-                        if (tile.instrument.name == "piano") {
-                            showPianoEditor = true
-                        } else {
-                            showAudioEditor = true
+                    )
+                } else {
+                    BeatEditorScreen(
+                        categories = tileViewModel.categories,
+                        state = state,
+                        currentStep = currentStep,
+                        modifier = Modifier.fillMaxSize(),
+                        onTileLongPress = { instrumentIndex, stepIndex ->
+                            val category = tileViewModel.categories[instrumentIndex]
+                            val tile = category.tiles.firstOrNull()
+                            selectedCategory = category.title
+                            selectedTile = tile
+                            if (tile?.instrument?.name == "piano") {
+                                showPianoEditor = true
+                            } else {
+                                showAudioEditor = true
+                            }
                         }
-                    }
-                )
+                    )
+                }
+
             }
         }
 
@@ -305,17 +345,92 @@ fun MusicPadScreen(
                 AudioEditor(
                     fileName = selectedTile!!.beat?.fileName ?: selectedTile!!.instrument.name,
                     onClose = { showAudioEditor = false },
-                    onSave = { fileName ->
-                        tileViewModel.assignBeat(
-                            selectedCategory!!,
-                            selectedTile!!.id,
-                            Beat("edited", "Edited Beat", fileName)
-                        )
+                    onSave = { path ->
+
+                        if (selectedTile != null && selectedCategory != null) {
+
+                            tileViewModel.assignBeat(
+                                selectedCategory!!,
+                                selectedTile!!.id,
+                                Beat("edited", "Edited Audio", path)
+                            )
+                        }
+
                         showAudioEditor = false
                     }
                 )
             }
         }
+        if (showRecorder) {
+            VoiceRecorderDialog(
+                recorder = recorder,
+                onDismiss = { showRecorder = false },
+                onSave = { path ->
+                    tileViewModel.recordedAudios.add(path)
+
+                    tileViewModel.assignBeat(
+                        selectedCategory ?: "Default",
+                        selectedTile?.id ?: return@VoiceRecorderDialog,
+                        Beat("recorded", "Voice Recording", path)
+                    )
+
+                    showRecorder = false
+                }
+            )
+        }
+
+        LaunchedEffect(currentStep) {
+
+            tileViewModel.categories.forEachIndexed { instrumentIndex, category ->
+
+                val tileId = state.grid[instrumentIndex][currentStep] ?: return@forEachIndexed
+                val tile = category.tiles.find { it.id == tileId } ?: return@forEachIndexed
+
+                val beat = tile.beat
+
+                when {
+                    beat?.pianoPattern != null -> {
+                        sequencer.addPianoPattern(beat.pianoPattern)
+                    }
+
+                    beat?.drumPattern != null -> {
+                        sequencer.clearPatterns()
+
+                        tileViewModel.categories.forEachIndexed { instrumentIndex, category ->
+
+                            val tileId = state.grid[instrumentIndex][currentStep] ?: return@forEachIndexed
+                            val tile = category.tiles.find { it.id == tileId } ?: return@forEachIndexed
+
+                            val beat = tile.beat
+
+                            if (beat?.drumPattern != null) {
+                                sequencer.addDrumPattern(beat.drumPattern)
+                            }
+
+                            if (beat?.pianoPattern != null) {
+                                sequencer.addPianoPattern(beat.pianoPattern)
+                            }
+                        }
+                    }
+
+                    beat?.fileName != null -> {
+                        val velocity = state.velocityGrid[instrumentIndex][currentStep]
+
+                        audioPlayer.setVolume(velocity)
+
+                        val file = beat.fileName
+
+                        if (file.startsWith("/") || file.startsWith("content://")) {
+                            audioPlayer.playImported(file)
+                        } else {
+                            audioPlayer.playSound(file)
+                        }
+                    }
+                }
+            }
+        }
+
+
     }
 }
 
@@ -325,61 +440,108 @@ fun TopBar(
     metronome: MetronomeEngine,
     onProfileClick: () -> Unit,
     metronomeRunning: Boolean,
-    onToggleMetronome: () -> Unit
+    onToggleMetronome: () -> Unit,
+    audioPlayer: AudioPlayer,
+    onMicClick: () -> Unit,
+    swing: Float,
+    onSwingChange: (Float) -> Unit,
+    onExportClick: () -> Unit
 ) {
     val elapsedTime by metronome.elapsedTime.collectAsState()
 
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    var showVolumeSlider by remember { mutableStateOf(false) }
+    var volume by remember { mutableStateOf(1f) }
 
-        IconButton(onClick = onBackClick) {
-            Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
-        }
-
-        Box(
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .background(Color.DarkGray, RoundedCornerShape(8.dp))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text = formatTime(elapsedTime),
-                color = Color.White,
-                fontWeight = FontWeight.Medium
-            )
-        }
+    Column {
 
         Row(
-            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            IconButton({}) { Icon(Icons.Default.Mic, null, tint = Color.White) }
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
+            }
 
-            IconButton(onClick = onToggleMetronome) {
-                Icon(
-                    Icons.Default.Speed,
-                    "Metronome",
-                    tint = if (metronomeRunning) Color.Green else Color.White
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .background(Color.DarkGray, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = formatTime(elapsedTime),
+                    color = Color.White
                 )
             }
 
-            IconButton({}) { Icon(Icons.Default.VolumeUp, null, tint = Color.White) }
+            Row(
+                modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
-            IconButton({}) { Icon(Icons.Default.Menu, null, tint = Color.White) }
+                IconButton(onClick = onMicClick) {
+                    Icon(Icons.Default.Mic, null, tint = Color.White)
+                }
 
-            IconButton(onClick = onProfileClick) {
-                Icon(
-                    Icons.Filled.AccountCircle,
-                    "Profile",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
+                IconButton(onClick = onToggleMetronome) {
+                    Icon(
+                        Icons.Default.Speed,
+                        "Metronome",
+                        tint = if (metronomeRunning) Color.Green else Color.White
+                    )
+                }
+
+
+                IconButton(onClick = {
+                    showVolumeSlider = !showVolumeSlider
+                }) {
+                    Icon(Icons.Default.VolumeUp, "Volume", tint = Color.White)
+                }
+
+                IconButton(onClick = onExportClick) {
+                    Icon(Icons.Default.Save, "Export", tint = Color.White)
+                }
+
+
+                IconButton({}) {
+                    Icon(Icons.Default.Menu, null, tint = Color.White)
+                }
+
+                IconButton(onClick = onProfileClick) {
+                    Icon(
+                        Icons.Filled.AccountCircle,
+                        "Profile",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
         }
+
+
+        if (showVolumeSlider) {
+            androidx.compose.material3.Slider(
+                value = volume,
+                onValueChange = {
+                    volume = it
+                    audioPlayer.setVolume(it)
+                },
+                valueRange = 0f..1f,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
+
+
+        Text("Swing", color = Color.White)
+
+        Slider(
+            value = swing,
+            onValueChange = onSwingChange,
+            valueRange = 0f..0.5f,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
     }
 }
 
@@ -439,10 +601,17 @@ fun SoundGrid(
 
                                     } else if (beat?.drumPattern != null) {
                                         sequencer.addDrumPattern(beat.drumPattern)
+                                    }
 
-                                    } else if (beat?.fileName != null) {
-                                        audioPlayer.playSound(beat.fileName)
+                                    else if (beat?.fileName != null) {
 
+                                        val file = beat.fileName
+
+                                        if (file.startsWith("content://") || file.startsWith("/")) {
+                                            audioPlayer.playImported(file)
+                                        } else {
+                                            audioPlayer.playSound(file)
+                                        }
                                     } else {
 
                                         when (tile.instrument.name) {
@@ -471,7 +640,8 @@ fun SoundGrid(
                                     activeTiles = activeTiles - tile.id
                                 }
                             },
-                            onLongPress = { onLongPress(category.title, tile) }
+                            onLongPress = { onLongPress(category.title, tile) },
+                                    stepIndex = column
                         )
                     }
                 }
@@ -486,6 +656,7 @@ fun SoundPad(
     icon: Painter,
     isActive: Boolean,
     isPlayhead: Boolean,
+    stepIndex: Int,
     onClick: () -> Unit,
     onLongPress: () -> Unit
 ){
@@ -514,9 +685,9 @@ fun SoundPad(
                 }
             )
             .border(
-                if (isActive) 3.dp else 0.dp,
+                if (stepIndex % 4 == 0) 2.dp else 0.dp,
                 Color.White,
-                RoundedCornerShape(20.dp)
+                RoundedCornerShape(12.dp)
             )
             .combinedClickable(
                 onClick = { pressed = true; onClick() },
@@ -584,4 +755,191 @@ fun formatTime(seconds: Long): String {
     val s = secs.toString().padStart(2, '0')
 
     return "$h:$m:$s"
+}
+
+@Composable
+fun VoiceRecorderDialog(
+    recorder: VoiceRecorder,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+
+    var isRecording by remember { mutableStateOf(false) }
+    var recordedPath by remember { mutableStateOf<String?>(null) }
+    var seconds by remember { mutableStateOf(0) }
+
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            while (true) {
+                delay(1000)
+                seconds++
+            }
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+
+        Column(
+            modifier = Modifier
+                .background(Color(0xFF1E1E1E), RoundedCornerShape(16.dp))
+                .padding(20.dp)
+                .fillMaxWidth()
+        ) {
+
+
+            Text(
+                "Voice Recorder",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                if (isRecording) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(Color.Red, RoundedCornerShape(50))
+                    )
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                Text(
+                    text = formatTimer(seconds),
+                    color = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+
+            Button(
+                onClick = {
+                    if (!isRecording) {
+                        seconds = 0
+                        recorder.startRecording()
+                        isRecording = true
+                    } else {
+                        recordedPath = recorder.stopRecording()
+                        isRecording = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (isRecording) Color.Red else Color(0xFF4CAF50)
+                )
+            ) {
+                Text(
+                    if (isRecording) "Stop Recording" else "Start Recording",
+                    color = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+
+            recordedPath?.let { path ->
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Button(
+                        onClick = { recorder.playRecording(path) },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Play")
+                    }
+
+                    Button(
+                        onClick = { onSave(path) },
+                        modifier = Modifier.weight(1f),
+                        colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2196F3)
+                        )
+                    ) {
+                        Text("Save")
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color.DarkGray
+                )
+            ) {
+                Text("Close", color = Color.White)
+            }
+        }
+    }
+}
+fun formatTimer(seconds: Int): String {
+    val mins = seconds / 60
+    val secs = seconds % 60
+    return "${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
+}
+
+@Composable
+fun RecordingsList(
+    tileViewModel: TileViewModel,
+    audioPlayer: AudioPlayer
+) {
+    LazyColumn {
+
+        items(tileViewModel.recordedAudios.size) { index ->
+
+            val path = tileViewModel.recordedAudios[index]
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+                    .background(Color(0xFF2A2A2A), RoundedCornerShape(10.dp))
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Column {
+                    Text(
+                        text = "Recording ${index + 1}",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = path.substringAfterLast("/"),
+                        color = Color.Gray,
+                        fontSize = MaterialTheme.typography.bodySmall.fontSize
+                    )
+                }
+
+                Row {
+
+                    IconButton(onClick = {
+                        audioPlayer.playImported(path)
+                    }) {
+                        Icon(Icons.Default.PlayArrow, null, tint = Color.White)
+                    }
+
+                    IconButton(onClick = {
+                        tileViewModel.recordedAudios.removeAt(index)
+                    }) {
+                        Icon(Icons.Default.Delete, null, tint = Color.Red)
+                    }
+                }
+            }
+        }
+    }
 }
