@@ -6,6 +6,15 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -75,16 +84,46 @@ fun DrumBeatEditor(
             .padding(16.dp)
     ) {
 
-        Text(
-            "Drum Beat Editor",
-            color = Color.White
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(onClick = {
+                playing = false
+                onClose()
+            }) {
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+            }
+
+            Row {
+                IconButton(onClick = { playing = !playing }) {
+                    Icon(
+                        imageVector = if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (playing) "Stop" else "Play",
+                        tint = Color.White
+                    )
+                }
+                IconButton(onClick = {
+                    playing = false
+                    onSave()
+                }) {
+                    Icon(Icons.Default.Save, contentDescription = "Save", tint = Color.White)
+                }
+                IconButton(onClick = { state.clear() }) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
+                }
+                IconButton(onClick = {  }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
+                }
+            }
+        }
 
         Spacer(Modifier.height(16.dp))
 
         state.grid.forEachIndexed { rowIndex, row ->
 
             Row(
+                modifier = Modifier.padding(start = 20.dp),
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
             ) {
 
@@ -122,59 +161,6 @@ fun DrumBeatEditor(
             }
 
             Spacer(Modifier.height(6.dp))
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxWidth()
-
-        ) {
-
-            Text(
-                if (playing) "Stop" else "Play",
-                color = Color.Yellow,
-                modifier = Modifier.clickable {
-                    playing = !playing
-                }
-            )
-
-            Text(
-                "Clear",
-                color = Color.Cyan,
-                modifier = Modifier.clickable {
-                    state.clear()
-                }
-            )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-
-            Text(
-                "Cancel",
-                color = Color.Red,
-                modifier = Modifier.clickable {
-                    playing = false
-                    onClose()
-                }
-            )
-
-            Text(
-                "Save Beat",
-                color = Color.Green,
-                modifier = Modifier.clickable {
-
-                    playing = false
-
-                    onSave()
-                }
-            )
         }
     }
 }
