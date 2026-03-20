@@ -1,6 +1,6 @@
 package org.example.project
 
-import PianoRollEditor
+
 import TileViewModel
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -61,7 +61,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import org.example.project.auth.AuthRepository
-import pianoNotes
 import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
 
@@ -166,12 +165,32 @@ fun MusicPadScreen(
     val onExport = {
         val path = "/tmp/beat_${Clock.System.now().toEpochMilliseconds()}.wav"
 
+        val path2 = "/tmp/midi_${Clock.System.now().toEpochMilliseconds()}.mid"
+
         audioExporter.exportBeat(
             state = state,
             categories = tileViewModel.categories,
             bpm = metronome.bpm,
             outputPath = path
         )
+
+        audioExporter.exportMidi(
+
+            state = state,
+            categories = tileViewModel.categories,
+            bpm = metronome.bpm,
+            outputPath = path2
+        )
+
+        audioExporter.exportFromMidi(
+            path2,
+            metronome.bpm,
+            "exports/from_midi.wav"
+        )
+
+        println("EXPORTED: $path2")
+
+
 
         println("EXPORTED: $path")
     }
