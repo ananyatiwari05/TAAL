@@ -384,3 +384,37 @@ Between a **fantastic concert by Tanishq 🎸**, some of us (*me*) getting sick 
 
 *tataaa >.< devs*
 
+
+
+## Devlog #11  
+*22-03-2026* ~by [Tanishq Pandey](https://github.com/Tanishq172006)
+
+Today was more about feature expansion and making the app feel more interactive and usable. Guitar logic, UI improvements, and core fixes kept us busy throughout.
+
+Keeping this short, here is what we did today:
+
+- [Ananya](https://github.com/ananyatiwari05)  
+    - Started working on guitar implementation.  
+    - Explored how note patterns and strumming logic can be structured and mapped to actual sound output.  
+    - Began integrating this with the UI layer.  
+    - Implemented long-press interaction to trigger dialog boxes for better accessibility of instrument controls.
+
+- [Lavanya](https://www.github.com/Lavanya24R)  
+    - Added functionality to highlight tiles when a beat is edited.  
+    - Implemented automatic tile addition to canvas on beat edit.  
+    - Added working "+" dialog box in canvas to directly add beats.
+
+- [Tanishq](https://github.com/Tanishq172006)  
+    - Added functionality to the initial page where users can select difficulty, improving user experience.  
+    - Fixed audio export issues.  
+    - Fixed data persistence for both JVM and Android.
+
+- [Anshul](https://www.github.com/anshulbadhani)  
+    - Still working on the CPP audio engine bridge.
+
+---
+
+welp things are getting real now 👀 guitar implementation has started which is actually huge, UI is finally becoming interactive and usable, and core fixes are making everything stable.  
+offline meets are helping a lot now — work feels faster, fun and chaotic at the same time 🔥  
+bridge is still haunting us but we’re getting there… slow but steady 🚀
+
