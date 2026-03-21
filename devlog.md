@@ -349,3 +349,38 @@ That was that, and now for the next episode we have:
 
 Day 10 added more functionalities to our app and made us proceed further towards our goal making us sleep along with snores.zzZZ
 
+
+## Devlog #11
+
+*~multi-day update* ~by [Ananya Tiwari](https://www.github.com/ananyatiwari05)
+
+okay so… this isn’t a one-day devlog as
+
+life happened.
+
+Between a **fantastic concert by Tanishq 🎸**, some of us (*me*) getting sick 🤒, and a bunch of lab work + tests, we couldn’t keep up with daily logs. But we *did* keep building—just at our own pace. And honestly, a LOT went down.
+
+### what we worked on:
+
+* [Tanishq](https://github.com/Tanishq172006)
+  Went full DAW-mode on the project. Fixed issues across platforms and made the app feel way more stable and polished. Tweaked the UI to make it cleaner and closer to a real music production workflow.
+  Added a **music file exporter**, so now we can actually *hear* what we create (big win). Implemented a **recorder**, expanded top bar functionalities, and integrated **KTMIDI support**—which means MIDI files can now be exported and edited on external music software.
+  Also introduced **velocity and swing controls**, adding that human feel to notes instead of rigid playback. The app is slowly evolving from “tool” → “actual DAW” 
+
+* [Lavanya](https://www.github.com/Lavanya24R)
+  Worked deeply on the database layer. Added necessary **serialization plugins and dependencies**, and refactored the bridge between `.sq` files and `.kt` code for cleaner data handling.
+  Expanded the query set and implemented them properly, making the database more functional. Consolidated all tables into a **single structured file** for better maintainability.
+  On the UI side, designed the **guitar beats editor dialog box** and standardized the UI structure across all beat editor dialogs—making everything feel consistent and reusable.
+
+* [Anshul](https://www.github.com/anshulbadhani)
+  Focused on architecture and performance. Separated the **core engine logic** from platform-specific code, making the project cleaner and more scalable.
+  Encapsulated the `AudioEngine` into a more modular structure, which should make future integrations smoother.
+  Also tackled some **memory issues**, improving stability during audio processing and playback. Solid under-the-hood work ⚙️
+
+* [Ananya](https://github.com/ananyatiwari05)
+  Studied how a **Brush tool (like in FL Studio)** actually works under the hood.
+  Explored how piano roll grids are structured using **time divisions (ticks/steps)** and how snapping works with different resolutions (1/4, 1/8, 1/16, etc.). Studied how brush logic dynamically places multiple notes based on drag velocity and direction, while ensuring alignment with the grid.
+  Additionally, explored how to design **dialog boxes for beat editors**—focusing on reusable composables, state handling, and maintaining consistency across different instrument editors.Additionally, worked on integrating saxophone tune datasets from web sources, understanding MIDI/audio dataset formats, parsing note sequences, and mapping them into our internal structure for playback/editing. Designed a dedicated saxophone dialog box, aligning it with the existing beat editor UI system while accommodating instrument-specific controls.
+
+*tataaa >.< devs*
+
