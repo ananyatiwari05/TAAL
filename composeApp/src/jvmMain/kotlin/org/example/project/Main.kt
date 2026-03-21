@@ -15,6 +15,7 @@ fun main() = application {
         val audioPlayer = remember { AudioPlayer() }
         val audioImporter = remember { AudioImporter() }
         val audioExporter = remember { AudioExporter() }
+        val settingsManager = remember { SettingsManager() }
 
         val fakeAuthRepository = remember {
             object : AuthRepository {
@@ -42,7 +43,8 @@ fun main() = application {
             authRepository = fakeAuthRepository,
             audioImporter = audioImporter,
             audioExporter = audioExporter,
-            onGoogleSignInClick = {}
+            onGoogleSignInClick = {},
+            settingsManager = settingsManager
         )
     }
 }

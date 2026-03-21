@@ -24,6 +24,13 @@ class BeatEditorState {
             }
         }
     }
+    fun placeTile(row: Int, col: Int, tileId: Int) {
+        grid = grid.toMutableList().apply {
+            this[row] = this[row].toMutableList().apply {
+                this[col] = tileId
+            }
+        }
+    }
 
     fun setVelocity(row: Int, col: Int, velocity: Float) {
         velocityGrid = velocityGrid.toMutableList().apply {

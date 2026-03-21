@@ -151,16 +151,14 @@ fun PatternGrid() {
     val bpm = 60
     val stepDuration = 60000L / (bpm * 4)
 
-    var playheadRow = 0   // 👈 moves top → bottom
+    var playheadRow = 0
 
     while (playing) {
 
-        // iterate through columns of current row
         state.grid[playheadRow].forEachIndexed { col, isActive ->
 
             if (isActive) {
                 audioPlayer.playSound(drumFiles[col])
-                // 👆 now column decides sound
             }
         }
 
@@ -176,7 +174,7 @@ fun GridCell(isActive: Boolean, isPlaying: Boolean) {
             .clip(CircleShape)
             .background(
                 when {
-                    isPlaying -> Color.Yellow   // 👈 highlight current row
+                    isPlaying -> Color.Yellow
                     isActive -> Color(0xFFB55454)
                     else -> Color(0xFF444444)
                 }

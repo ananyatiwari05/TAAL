@@ -223,6 +223,23 @@ fun MusicPadScreen(
         )
     }
 
+    fun addTileToBeatEditor(
+        state: BeatEditorState,
+        tileViewModel: TileViewModel,
+        selectedCategory: String,
+        tileId: Int,
+        step: Int
+    ) {
+        val instrumentIndex = tileViewModel.categories.indexOfFirst {
+            it.title == selectedCategory
+        }
+        if (instrumentIndex == -1) return ;
+
+        val stepIndex = state.grid[instrumentIndex].indexOfFirst { it == null }
+        val finalStep = if (stepIndex == -1) currentStep else stepIndex
+        state.placeTile(instrumentIndex, finalStep, tileId)
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(DarkBackground)) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             TopBar(
@@ -281,6 +298,7 @@ fun MusicPadScreen(
                 } else {
                     BeatEditorScreen(
                         categories = tileViewModel.categories,
+                        tileViewModel = tileViewModel,
                         state = state,
                         currentStep = currentStep,
                         modifier = Modifier.fillMaxSize(),
@@ -315,10 +333,19 @@ fun MusicPadScreen(
                         audioPlayer = audioPlayer,
                         onSaveToTile = { beat ->
                             tileViewModel.assignBeat(selectedCategory!!, selectedTile!!.id, beat)
+                            addTileToBeatEditor(
+                                state,
+                                tileViewModel,
+                                selectedCategory!!,
+                                selectedTile!!.id,
+                                currentStep
+                            )
                             showBeatSelector = false
+                            selectedTile!!.isEdited.value = true
                         },
                         onCreateNewTile = { beat ->
                             tileViewModel.addTile(selectedCategory!!, selectedTile!!, beat)
+                            selectedTile!!.isEdited.value = true
                             showBeatSelector = false
                         },
                         onImportAudio = {
@@ -341,16 +368,21 @@ fun MusicPadScreen(
                         state = pianoEditorState ?: PianoEditorState(),
                         audioPlayer = audioPlayer,
                         onSave = {
-                            tileViewModel.assignBeat(
-                                selectedCategory!!,
-                                selectedTile!!.id,
-                                Beat(
+                            tileViewModel.assignBeat(selectedCategory!!, selectedTile!!.id, Beat(
                                     id = "piano_${Clock.System.now().toEpochMilliseconds()}",
                                     name = "Piano Pattern",
                                     pianoPattern = pianoEditorState
                                 )
                             )
+                            addTileToBeatEditor(
+                                state,
+                                tileViewModel,
+                                selectedCategory!!,
+                                selectedTile!!.id,
+                                currentStep
+                            )
                             showPianoEditor = false
+                            selectedTile!!.isEdited.value = true
                         },
                         onClose = { showPianoEditor = false }
                     )
@@ -374,7 +406,15 @@ fun MusicPadScreen(
                                     drumPattern = drumEditorState!!
                                 )
                             )
+                            addTileToBeatEditor(
+                                state,
+                                tileViewModel,
+                                selectedCategory!!,
+                                selectedTile!!.id,
+                                currentStep
+                            )
                             showDrumEditor = false
+                            selectedTile!!.isEdited.value = true
                         },
                         onClose = { showDrumEditor = false }
                     )
@@ -396,6 +436,13 @@ fun MusicPadScreen(
                                 selectedTile!!.id,
                                 Beat("edited", "Edited Audio", path)
                             )
+                            addTileToBeatEditor(
+                                state,
+                                tileViewModel,
+                                selectedCategory!!,
+                                selectedTile!!.id,
+                                currentStep
+                            )
                         }
 
                         showAudioEditor = false
@@ -415,7 +462,13 @@ fun MusicPadScreen(
                         selectedTile?.id ?: return@VoiceRecorderDialog,
                         Beat("recorded", "Voice Recording", path)
                     )
-
+                    addTileToBeatEditor(
+                        state,
+                        tileViewModel,
+                        selectedCategory ?: "Default",
+                        selectedTile!!.id,
+                        currentStep
+                    )
                     showRecorder = false
                 }
             )
@@ -638,6 +691,7 @@ fun SoundGrid(
                             icon = painterResource(tile.instrument.iconRes),
                             isActive = tile.id in activeTiles,
                             isPlayhead = column == currentStep,
+                            isEdited = tile.isEdited.value,
                             onClick = {
 
                                 activeTiles = activeTiles + tile.id
@@ -705,6 +759,7 @@ fun SoundPad(
     icon: Painter,
     isActive: Boolean,
     isPlayhead: Boolean,
+    isEdited: Boolean,
     stepIndex: Int,
     onClick: () -> Unit,
     onLongPress: () -> Unit
@@ -728,6 +783,7 @@ fun SoundPad(
             .clip(RoundedCornerShape(20.dp))
             .background(
                 when {
+                    isEdited -> Color.White.copy(alpha = 0.9f)
                     isPlayhead -> Color.White.copy(alpha = 0.25f)
                     isActive -> animatedColor
                     else -> color

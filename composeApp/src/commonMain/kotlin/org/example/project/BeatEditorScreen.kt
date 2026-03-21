@@ -1,5 +1,6 @@
 package org.example.project
 
+import TileViewModel
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,6 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import org.jetbrains.compose.resources.painterResource
 import taal.composeapp.generated.resources.Res
 import taal.composeapp.generated.resources.drum
@@ -29,6 +32,7 @@ import taal.composeapp.generated.resources.saxophone
 @Composable
 fun BeatEditorScreen(
     categories: List<InstrumentCategory>,
+    tileViewModel: TileViewModel,
     state: BeatEditorState,
     modifier: Modifier = Modifier,
     currentStep: Int,
@@ -37,6 +41,7 @@ fun BeatEditorScreen(
 
     val horizontalScroll = rememberScrollState()
     var selectedTileId by remember { mutableStateOf<Int?>(null) }
+    var showAddDialog by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier
@@ -54,7 +59,9 @@ fun BeatEditorScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            val allTiles = categories.flatMap { it.tiles }
+            val allTiles = categories
+                .flatMap { it.tiles }
+                .filter { it.beat != null }
 
             items(allTiles.size) { index ->
 
@@ -84,16 +91,18 @@ fun BeatEditorScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(20.dp))
 
                 Box(
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(65.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.DarkGray),
+                        .background(Color.DarkGray)
+                        .clickable {
+                            showAddDialog = true
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("+", color = Color.White)
+                    Text("+", color = Color.White, fontSize = 30.sp)
                 }
             }
         }
@@ -158,60 +167,29 @@ fun BeatEditorScreen(
             }
         }
     }
-}
+    if (showAddDialog) {
+        Dialog(onDismissRequest = { showAddDialog = false }) {
 
-@Preview
-@Composable
-fun BeatEditorScreenPreview() {
+            AddBeatDialog(
+                categories = categories,
+                onSelectTile = { tile ->
 
-    val instruments = listOf(
-        InstrumentCategory(
-            "Drums",
-            listOf(
-                Tile(
-                    id = 0,
-                    InstrumentType(
-                        name = "drum",
-                        color = Color.Red,
-                        iconRes = Res.drawable.drum
+                    val category = categories.first {
+                        it.tiles.contains(tile)
+                    }
+
+                    tileViewModel.addTile(
+                        categoryTitle = category.title,
+                        baseTile = tile,
+                        beat = tile.beat!!
                     )
-                )
-            )
-        ),
-        InstrumentCategory(
-            "Guitars",
-            listOf(
-                Tile(
-                    id = 1,
-                    InstrumentType(
-                        name = "guitar",
-                        color = Color(0xFFFF9800),
-                        iconRes = Res.drawable.guitar
-                    )
-                )
-            )
-        ),
-        InstrumentCategory(
-            "Sax",
-            listOf(
-                Tile(
-                    id = 2,
-                    InstrumentType(
-                        name = "sax",
-                        color = Color.Yellow,
-                        iconRes = Res.drawable.saxophone
-                    )
-                )
-            )
-        )
-    )
 
-    val state = rememberBeatEditorState()
+                    selectedTileId = tile.id
+                    showAddDialog = false
+                },
+                onDismiss = { showAddDialog = false }
+            )
+        }
+    }
 
-    BeatEditorScreen(
-        categories = instruments,
-        state = state,
-        currentStep = 0,
-        onTileLongPress = { _, _ -> }
-    )
 }
