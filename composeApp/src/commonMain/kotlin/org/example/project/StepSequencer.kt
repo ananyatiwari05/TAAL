@@ -1,7 +1,7 @@
 package org.example.project
 
 import kotlinx.coroutines.*
-import pianoNotes
+
 
 class StepSequencer(
     private val metronome: MetronomeEngine,
@@ -51,10 +51,14 @@ class StepSequencer(
             "ride.wav","clap.wav"
         )
 
-        activeDrumPatterns.forEach { pattern ->
+        val snapshot = activeDrumPatterns.toList()
+
+        snapshot.forEach { pattern ->
 
             pattern.grid.forEachIndexed { row, steps ->
-                if (steps[step]) {
+                val safeStep = step % steps.size
+
+                if (steps[safeStep]) {
                     audioPlayer.playSound(drumFiles[row])
                 }
             }
@@ -67,11 +71,18 @@ class StepSequencer(
         activePianoPatterns.forEach { pattern ->
 
             pattern.grid.forEachIndexed { row, steps ->
-                if (steps[step]) {
+                val safeStep = step % steps.size
+
+                if (steps[safeStep]) {
                     audioPlayer.playSound(pianoNotes[row])
                 }
             }
 
         }
+    }
+
+    fun clearPatterns() {
+        activeDrumPatterns.clear()
+        activePianoPatterns.clear()
     }
 }

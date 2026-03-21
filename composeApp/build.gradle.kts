@@ -52,7 +52,8 @@ kotlin {
             implementation(libs.sqldelight.android.driver)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-        }
+            implementation(libs.ktmidi)        }
+
         commonMain.dependencies {
 
             implementation(libs.compose.runtime)
@@ -73,6 +74,7 @@ kotlin {
             implementation("dev.gitlive:firebase-auth:2.4.0")
             implementation("dev.gitlive:firebase-firestore:2.4.0")
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.ktmidi)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -85,6 +87,7 @@ kotlin {
 
             implementation(libs.kotlinx.coroutinesSwing)
             implementation(libs.sqldelight.sqlite.driver)
+            implementation(libs.ktmidi.jvm)
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)

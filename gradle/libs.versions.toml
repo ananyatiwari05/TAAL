@@ -17,6 +17,7 @@ kotlinx-coroutines = "1.10.2"
 material3 = "1.10.0-alpha05"
 sqldelight = "2.2.1"
 serialization = "1.7.3"
+ktmidi = "0.10.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -45,7 +46,8 @@ sqldelight-native-driver = { module = "app.cash.sqldelight:native-driver", versi
 sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 sqldelight-coroutines = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
-
+ktmidi = { module = "dev.atsushieno:ktmidi", version.ref = "ktmidi" }
+ktmidi-jvm = { module = "dev.atsushieno:ktmidi-jvm-desktop", version.ref = "ktmidi" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

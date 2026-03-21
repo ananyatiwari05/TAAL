@@ -1,3 +1,5 @@
+package org.example.project
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -19,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -79,13 +83,17 @@ fun PianoRollEditor(
             }
 
             Row {
-
-                IconButton(onClick = onSave) {
-                    Icon(Icons.Default.Save, null)
-                }
-
                 IconButton(onClick = {}) {
-                    Icon(Icons.Default.Add, null)
+                    Icon(Icons.Default.PlayArrow, "Play", tint = Color.White)
+                }
+                IconButton(onClick = onSave) {
+                    Icon(Icons.Default.Save, "Save", tint = Color.White)
+                }
+                IconButton(onClick = {}){
+                    Icon(Icons.Default.Delete,"Delete", tint = Color.White)
+                }
+                IconButton(onClick = {}) {
+                    Icon(Icons.Default.Add, "Add", tint = Color.White)
                 }
             }
         }

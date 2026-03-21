@@ -1,5 +1,6 @@
 package org.example.project
 
+import TileViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,7 +21,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.PlayArrow
 
 private val BackgroundColor = Color(0xFF121212)
 private val CardColor = Color(0xFF333333)
@@ -28,6 +31,8 @@ private val ContentIconColor = Color(0xFF121212)
 
 @Composable
 fun ProjectSelectionScreen(
+    tileViewModel: TileViewModel,
+    audioPlayer: AudioPlayer?,
     onNavigateToMusic: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -75,6 +80,65 @@ fun ProjectSelectionScreen(
 
                         ProjectItemCard("New Project", onClick = onNavigateToMusic) { PlusGraphic() }
                         ProjectItemCard("Open Project", onClick = { /* TODO: Implement later */ }) { BookGraphic() }
+                    }
+                }
+                Spacer(modifier = Modifier.height(40.dp))
+
+                if (tileViewModel.recordedAudios.isNotEmpty()) {
+
+                    Text(
+                        text = "Your Recordings",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+
+                        tileViewModel.recordedAudios.forEachIndexed { index, path ->
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(CardColor, RoundedCornerShape(10.dp))
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+
+                                Column(modifier = Modifier.weight(1f)) {
+
+                                    Text(
+                                        text = "Recording ${index + 1}",
+                                        color = Color.White
+                                    )
+
+                                    Text(
+                                        text = path.substringAfterLast("/"),
+                                        color = Color.Gray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+
+                                Row {
+
+                                    IconButton(onClick = {
+                                        audioPlayer?.playImported(path)
+                                    }) {
+                                        Icon(Icons.Default.PlayArrow, null, tint = Color.White)
+                                    }
+
+                                    IconButton(onClick = {
+                                        tileViewModel.recordedAudios.remove(path)
+                                    }) {
+                                        Icon(Icons.Default.Delete, null, tint = Color.Red)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -129,9 +193,19 @@ fun BookGraphic() {
 @Preview
 @Composable
 fun ProjectSelectionPreview() {
-    MaterialTheme {
+    val fakeViewModel = TileViewModel()
 
+    fakeViewModel.recordedAudios.addAll(
+        listOf(
+            "/storage/emulated/0/recording_1.m4a",
+            "/storage/emulated/0/recording_2.m4a"
+        )
+    )
+
+    MaterialTheme {
         ProjectSelectionScreen(
+            tileViewModel = fakeViewModel,
+            audioPlayer = null, // ✅ no crash
             onNavigateToMusic = {},
             onNavigateBack = {}
         )

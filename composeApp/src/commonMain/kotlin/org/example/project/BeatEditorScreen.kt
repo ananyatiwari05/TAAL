@@ -12,8 +12,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,10 +31,12 @@ fun BeatEditorScreen(
     categories: List<InstrumentCategory>,
     state: BeatEditorState,
     modifier: Modifier = Modifier,
+    currentStep: Int,
     onTileLongPress: (Int, Int) -> Unit
 ) {
 
     val horizontalScroll = rememberScrollState()
+    var selectedTileId by remember { mutableStateOf<Int?>(null) }
 
     Row(
         modifier = modifier
@@ -53,19 +54,29 @@ fun BeatEditorScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            itemsIndexed(categories) { _, category ->
+            val allTiles = categories.flatMap { it.tiles }
 
-                val instrument = category.tiles.first().instrument
+            items(allTiles.size) { index ->
+
+                val tile = allTiles[index]
 
                 Box(
                     modifier = Modifier
                         .size(70.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(instrument.color),
+                        .background(
+                            if (selectedTileId == tile.id)
+                                Color.White
+                            else
+                                tile.instrument.color
+                        )
+                        .clickable {
+                            selectedTileId = tile.id
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(instrument.iconRes),
+                        painter = painterResource(tile.instrument.iconRes),
                         contentDescription = null,
                         modifier = Modifier.size(28.dp)
                     )
@@ -73,7 +84,6 @@ fun BeatEditorScreen(
             }
 
             item {
-
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Box(
@@ -89,7 +99,6 @@ fun BeatEditorScreen(
         }
 
         Spacer(modifier = Modifier.width(12.dp))
-
 
         LazyColumn(
             modifier = Modifier
@@ -113,7 +122,9 @@ fun BeatEditorScreen(
 
                     repeat(32) { stepIndex ->
 
-                        val active = state.grid[instrumentIndex][stepIndex]
+                        val tileId = state.grid[instrumentIndex][stepIndex]
+                        val active = tileId != null
+                        val isPlayingStep = stepIndex == currentStep
 
                         Box(
                             modifier = Modifier
@@ -121,21 +132,25 @@ fun BeatEditorScreen(
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(
-                                    if (active)
-                                        instrument.color
-                                    else
-                                        Color(0xFF555555)
+                                    when {
+                                        isPlayingStep -> Color.White.copy(alpha = 0.3f)
+                                        active -> instrument.color
+                                        else -> Color(0xFF555555)
+                                    }
                                 )
                                 .combinedClickable(
-
                                     onClick = {
-                                        state.toggle(instrumentIndex, stepIndex)
+                                        state.assign(instrumentIndex, stepIndex, selectedTileId)
                                     },
-
                                     onLongClick = {
-                                            onTileLongPress(instrumentIndex, stepIndex)
+                                        val currentVelocity = state.velocityGrid[instrumentIndex][stepIndex]
+                                        val newVelocity = when {
+                                            currentVelocity > 0.75f -> 0.5f
+                                            currentVelocity > 0.5f -> 0.25f
+                                            else -> 1f
+                                        }
+                                        state.setVelocity(instrumentIndex, stepIndex, newVelocity)
                                     }
-
                                 )
                         )
                     }
@@ -196,6 +211,7 @@ fun BeatEditorScreenPreview() {
     BeatEditorScreen(
         categories = instruments,
         state = state,
+        currentStep = 0,
         onTileLongPress = { _, _ -> }
     )
 }
