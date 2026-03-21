@@ -11,7 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +29,11 @@ private val BackgroundColor = Color(0xFF121212)
 private val CardColor = Color(0xFF333333)
 private val ContentIconColor = Color(0xFF121212)
 
+
+object AppSettings {
+    var userMode by mutableStateOf(UserMode.BEGINNER)
+}
+
 @Composable
 fun ProjectSelectionScreen(
     tileViewModel: TileViewModel,
@@ -45,7 +50,6 @@ fun ProjectSelectionScreen(
 
         Column(modifier = Modifier.fillMaxSize()) {
 
-
             IconButton(
                 onClick = onNavigateBack,
                 modifier = Modifier.padding(16.dp)
@@ -53,38 +57,47 @@ fun ProjectSelectionScreen(
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
 
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 40.dp, start = 40.dp, end = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top
             ) {
+
+                Text(
+                    text = "Select Mode",
+                    color = Color.Gray,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(40.dp))
+
                 if (isLandscape) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
                         ProjectItemCard("New Project", onClick = onNavigateToMusic) { PlusGraphic() }
-                        ProjectItemCard("Open Project", onClick = { /* TODO: Implement later */ }) { BookGraphic() }
+                        ProjectItemCard("Open Project", onClick = { }) { BookGraphic() }
                     }
                 } else {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(40.dp)
                     ) {
-
                         ProjectItemCard("New Project", onClick = onNavigateToMusic) { PlusGraphic() }
-                        ProjectItemCard("Open Project", onClick = { /* TODO: Implement later */ }) { BookGraphic() }
+                        ProjectItemCard("Open Project", onClick = { }) { BookGraphic() }
                     }
                 }
+
                 Spacer(modifier = Modifier.height(40.dp))
 
-                if (tileViewModel.recordedAudios.isNotEmpty()) {
+                if (AppSettings.userMode != UserMode.BEGINNER &&
+                    tileViewModel.recordedAudios.isNotEmpty()
+                ) {
 
                     Text(
                         text = "Your Recordings",
@@ -146,9 +159,10 @@ fun ProjectSelectionScreen(
     }
 }
 
+
+
 @Composable
 fun ProjectItemCard(label: String, onClick: () -> Unit, icon: @Composable () -> Unit) {
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable { onClick() }
@@ -188,26 +202,4 @@ fun BookGraphic() {
         modifier = Modifier.size(60.dp),
         tint = ContentIconColor
     )
-}
-
-@Preview
-@Composable
-fun ProjectSelectionPreview() {
-    val fakeViewModel = TileViewModel()
-
-    fakeViewModel.recordedAudios.addAll(
-        listOf(
-            "/storage/emulated/0/recording_1.m4a",
-            "/storage/emulated/0/recording_2.m4a"
-        )
-    )
-
-    MaterialTheme {
-        ProjectSelectionScreen(
-            tileViewModel = fakeViewModel,
-            audioPlayer = null, // ✅ no crash
-            onNavigateToMusic = {},
-            onNavigateBack = {}
-        )
-    }
 }

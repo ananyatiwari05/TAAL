@@ -52,7 +52,9 @@ kotlin {
             implementation(libs.sqldelight.android.driver)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.ktmidi)        }
+            implementation(libs.ktmidi)
+            implementation(libs.datastore.preferences)
+        }
 
         commonMain.dependencies {
 

@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.launch
 
 val DarkBackground = Color(0xFF121212)
 val CardBackground = Color(0xFF333333)
@@ -30,7 +32,11 @@ val IconColor = Color(0xFF121212)
 val IndicatorGray = Color(0xFF444444) // Color for "empty" pills
 
 @Composable
-fun StandardsScreen(onNavigateToProjects: () -> Unit) {
+fun StandardsScreen(
+    onNavigateToProjects: () -> Unit,
+    settingsManager: SettingsManager
+) {
+    val scope = rememberCoroutineScope()
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
@@ -61,18 +67,54 @@ fun StandardsScreen(onNavigateToProjects: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    StandardButton("Beginner", 1, onClick = onNavigateToProjects)
-                    StandardButton("Intermediate", 2, onClick = onNavigateToProjects)
-                    StandardButton("Advanced", 3, onClick = onNavigateToProjects)
+                    StandardButton("Beginner", 1, onClick = {
+                        scope.launch {
+                            AppSettings.userMode = UserMode.BEGINNER
+                            settingsManager.saveMode(UserMode.BEGINNER)
+                        }
+                        onNavigateToProjects()
+                    })
+                    StandardButton("Intermediate", 2, onClick = {
+                        scope.launch {
+                            AppSettings.userMode = UserMode.INTERMEDIATE
+                            settingsManager.saveMode(UserMode.INTERMEDIATE)
+                        }
+                        onNavigateToProjects()
+                    })
+                    StandardButton("Advanced", 3, onClick = {
+                        scope.launch {
+                            AppSettings.userMode = UserMode.ADVANCED
+                            settingsManager.saveMode(UserMode.ADVANCED)
+                        }
+                        onNavigateToProjects()
+                    })
                 }
             } else {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(32.dp)
                 ) {
-                    StandardButton("Beginner", 1, onClick = onNavigateToProjects)
-                    StandardButton("Intermediate", 2, onClick = onNavigateToProjects)
-                    StandardButton("Advanced", 3, onClick = onNavigateToProjects)
+                    StandardButton("Beginner", 1, onClick = {
+                        scope.launch {
+                            AppSettings.userMode = UserMode.BEGINNER
+                            settingsManager.saveMode(UserMode.BEGINNER)
+                        }
+                        onNavigateToProjects()
+                    })
+                    StandardButton("Intermediate", 2, onClick = {
+                        scope.launch {
+                            AppSettings.userMode = UserMode.INTERMEDIATE
+                            settingsManager.saveMode(UserMode.INTERMEDIATE)
+                        }
+                        onNavigateToProjects()
+                    })
+                    StandardButton("Advanced", 3, onClick = {
+                        scope.launch {
+                            AppSettings.userMode = UserMode.ADVANCED
+                            settingsManager.saveMode(UserMode.ADVANCED)
+                        }
+                        onNavigateToProjects()
+                    })
                 }
             }
         }
@@ -159,9 +201,9 @@ fun StandardIcon(fillCount: Int) {
     }
 }
 
-@Preview
-@Composable
-fun StandardsPreview() {
-
-    StandardsScreen(onNavigateToProjects = {})
-}
+//@Preview
+//@Composable
+//fun StandardsPreview() {
+//
+//    StandardsScreen(onNavigateToProjects = {})
+//}

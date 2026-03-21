@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import org.example.project.auth.AuthRepositoryImpl
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.compose.runtime.remember
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -18,6 +19,8 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var audioImporter: AudioImporter
     private lateinit var audioPlayer: AudioPlayer
+    private lateinit var audioExporter: AudioExporter
+
     private lateinit var authRepo: AuthRepositoryImpl
 
 
@@ -53,17 +56,24 @@ class MainActivity : ComponentActivity() {
         audioImporter = AudioImporter()
         audioPlayer = AudioPlayer(this)
         authRepo = AuthRepositoryImpl(this)
+        audioExporter = AudioExporter(this)
+        val context = this
+        val settingsManager = SettingsManager(context)
+
 
         setContent {
             App(
                 audioPlayer = audioPlayer,
                 authRepository = authRepo,
-                audioImporter = audioImporter, // ✅ pass importer
+                audioImporter = audioImporter,
 
                 onGoogleSignInClick = {
                     val intent = authRepo.googleSignInClient.signInIntent
                     googleSignInLauncher.launch(intent)
-                }
+                },
+                    audioExporter = audioExporter,
+                settingsManager = settingsManager
+
             )
         }
         requestMicPermission()

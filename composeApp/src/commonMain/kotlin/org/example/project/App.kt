@@ -63,6 +63,9 @@ import kotlinx.coroutines.delay
 import org.example.project.auth.AuthRepository
 import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
+import androidx.compose.runtime.LaunchedEffect
+
+
 
 
 @Composable
@@ -71,8 +74,21 @@ fun App(
     authRepository: AuthRepository,
     audioImporter: AudioImporter,
     audioExporter: AudioExporter,
-    onGoogleSignInClick: () -> Unit
+    onGoogleSignInClick: () -> Unit,
+    settingsManager: SettingsManager
 ){
+    var isLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        AppSettings.userMode = settingsManager.loadMode()
+        isLoaded = true
+    }
+
+    if (!isLoaded) {
+        Text("Loading...")
+        return
+    }
+
     var currentScreen by rememberSaveable { mutableStateOf("standards") }
     val beatEditorState = rememberBeatEditorState()
     val tileViewModel = remember { TileViewModel() }
@@ -88,7 +104,8 @@ fun App(
                 when (currentScreen) {
                     "standards" -> {
                         StandardsScreen(
-                            onNavigateToProjects = { currentScreen = "projects" }
+                            onNavigateToProjects = { currentScreen = "projects" },
+                            settingsManager = settingsManager
                         )
                     }
 
@@ -131,6 +148,8 @@ fun App(
             }
         }
     }
+
+
 }
 
 @Composable
@@ -242,8 +261,12 @@ fun MusicPadScreen(
                         metronome = metronome,
                         sequencer = sequencer,
                         onLongPress = { categoryTitle, tile ->
+
+                            if (AppSettings.userMode == UserMode.BEGINNER) return@SoundGrid
+
                             selectedCategory = categoryTitle
                             selectedTile = tile
+
                             if (tile.instrument.name == "piano") {
                                 pianoEditorState = tile.beat?.pianoPattern ?: PianoEditorState()
                                 showPianoEditor = true
@@ -500,8 +523,10 @@ fun TopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                IconButton(onClick = onMicClick) {
-                    Icon(Icons.Default.Mic, null, tint = Color.White)
+                if (AppSettings.userMode != UserMode.BEGINNER) {
+                    IconButton(onClick = onMicClick) {
+                        Icon(Icons.Default.Mic, null, tint = Color.White)
+                    }
                 }
 
                 IconButton(onClick = onToggleMetronome) {
@@ -519,8 +544,10 @@ fun TopBar(
                     Icon(Icons.Default.VolumeUp, "Volume", tint = Color.White)
                 }
 
-                IconButton(onClick = onExportClick) {
-                    Icon(Icons.Default.Save, "Export", tint = Color.White)
+                if (AppSettings.userMode != UserMode.BEGINNER) {
+                    IconButton(onClick = onExportClick) {
+                        Icon(Icons.Default.Save, "Export", tint = Color.White)
+                    }
                 }
 
 
@@ -553,14 +580,17 @@ fun TopBar(
         }
 
 
-        Text("Swing", color = Color.White)
+        if (AppSettings.userMode == UserMode.ADVANCED) {
 
-        Slider(
-            value = swing,
-            onValueChange = onSwingChange,
-            valueRange = 0f..0.5f,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
+            Text("Swing", color = Color.White)
+
+            Slider(
+                value = swing,
+                onValueChange = onSwingChange,
+                valueRange = 0f..0.5f,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
     }
 }
 
@@ -961,4 +991,6 @@ fun RecordingsList(
             }
         }
     }
+
+
 }
