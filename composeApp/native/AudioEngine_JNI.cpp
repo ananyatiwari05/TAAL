@@ -21,6 +21,6 @@ Java_org_example_project_AudioEngineWrapper_playAsset(
         ){
     if (engineHandle == 0 || !filename || !assetManager) return;)
 
-    auto* engine =
+//    auto* engine =
 }
 }
