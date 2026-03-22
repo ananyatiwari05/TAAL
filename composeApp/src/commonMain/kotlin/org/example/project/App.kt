@@ -182,6 +182,7 @@ fun MusicPadScreen(
     var swingEnabled by remember { mutableStateOf(false) }
     var showGuitarEditor by remember { mutableStateOf(false) }
     var guitarEditorState by remember { mutableStateOf(GuitarEditorState()) }
+    var showAbout by remember { mutableStateOf(false) }
 
     var showSaveDialog by remember { mutableStateOf(false) }
 
@@ -240,7 +241,8 @@ fun MusicPadScreen(
                     swing = it
                     metronome.swing = it
                 },
-                onExportClick = onExportClick
+                onExportClick = onExportClick,
+                onInfoClick = { showAbout = true }
             )
             Spacer(Modifier.height(16.dp))
 
@@ -583,10 +585,14 @@ fun MusicPadScreen(
                 }
             }
         }
-
-
+        if (showAbout) {
+            AboutPage(
+                onClose = { showAbout = false }
+            )
+        }
     }
 }
+
 
 @Composable
 fun TopBar(
@@ -599,12 +605,14 @@ fun TopBar(
     onMicClick: () -> Unit,
     swing: Float,
     onSwingChange: (Float) -> Unit,
-    onExportClick: () -> Unit
+    onExportClick: () -> Unit,
+    onInfoClick: () -> Unit
 ) {
     val elapsedTime by metronome.elapsedTime.collectAsState()
 
     var showVolumeSlider by remember { mutableStateOf(false) }
     var volume by remember { mutableStateOf(1f) }
+    var showAbout by remember { mutableStateOf(false) }
 
     Column {
 
@@ -669,8 +677,8 @@ fun TopBar(
                 }
 
 
-                IconButton({}) {
-                    Icon(Icons.Default.Menu, null, tint = Color.White)
+                IconButton(onClick = { onInfoClick() } ) {
+                    Icon(Icons.Default.Info, null, tint = Color.White)
                 }
 
                 IconButton(onClick = onProfileClick) {

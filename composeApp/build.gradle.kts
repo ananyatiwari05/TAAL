@@ -40,20 +40,13 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            kotlin {
-                sourceSets {
-                    val androidMain by getting {
-                        dependencies {
-                            implementation("com.google.android.gms:play-services-auth:21.0.0")
-                        }
-                    }
-                }
-            }
+            implementation("com.google.android.gms:play-services-auth:21.0.0")
             implementation(libs.sqldelight.android.driver)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktmidi)
             implementation(libs.datastore.preferences)
+            implementation("com.google.firebase:firebase-bom:32.7.0")
         }
 
         commonMain.dependencies {
