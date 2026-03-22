@@ -173,7 +173,6 @@ fun MusicPadScreen(
     var showBeatSelector by remember { mutableStateOf(false) }
     var showPianoEditor by remember { mutableStateOf(false) }
     var showDrumEditor by remember { mutableStateOf(false) }
-    var showGuitarEditor by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedTile by remember { mutableStateOf<Tile?>(null) }
     var showRecorder by remember { mutableStateOf(false) }
@@ -291,8 +290,6 @@ fun MusicPadScreen(
                             } else if (tile.instrument.name == "drum") {
                                 drumEditorState = tile.beat?.drumPattern ?: DrumEditorState()
                                 showDrumEditor = true
-                            } else if (tile.instrument.name == "guitar") {
-                                showGuitarEditor = true
                             } else {
                                 showBeatSelector = true
                             }
@@ -422,16 +419,6 @@ fun MusicPadScreen(
                         onClose = { showDrumEditor = false }
                     )
                 }
-            }
-        }
-
-        if (showGuitarEditor && selectedTile != null) {
-            Dialog(onDismissRequest = { showGuitarEditor = false }) {
-                GuitarBeatsEditor(
-                    state = state,
-                    audioPlayer = audioPlayer,
-                    onClose = { showGuitarEditor = false }
-                )
             }
         }
 
