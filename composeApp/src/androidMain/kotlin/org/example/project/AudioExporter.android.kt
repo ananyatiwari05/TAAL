@@ -65,7 +65,9 @@ actual class AudioExporter(private val context: Context) {
             }
         }
 
-        writeWav(mixBuffer, sampleRate, outputPath)
+        val safePath = getSafePath(File(outputPath).name)
+        writeWav(mixBuffer, sampleRate, safePath)
+        println("Saved WAV: $safePath")
     }
 
     actual fun exportMidi(
@@ -142,7 +144,9 @@ actual class AudioExporter(private val context: Context) {
         val bytes = mutableListOf<Byte>()
         music.write(bytes)
 
-        File(outputPath).writeBytes(bytes.toByteArray())
+        val safePath = getSafePath(File(outputPath).name)
+        File(safePath).writeBytes(bytes.toByteArray())
+        println("Saved MIDI: $safePath")
     }
 
     actual fun exportFromMidi(
@@ -156,10 +160,9 @@ actual class AudioExporter(private val context: Context) {
 
         loadMidiAndPlay(midiPath, buffer, sampleRate, bpm)
 
-        val file = File(outputPath)
-        file.parentFile?.mkdirs()
-
-        writeWav(buffer, sampleRate, file.absolutePath)
+        val safePath = getSafePath(File(outputPath).name)
+        writeWav(buffer, sampleRate, safePath)
+        println("Saved FROM MIDI WAV: $safePath")
     }
 
     private fun loadWav(path: String): FloatArray? {
@@ -406,5 +409,10 @@ actual class AudioExporter(private val context: Context) {
                 )
             }
         }
+    }
+    private fun getSafePath(fileName: String): String {
+        val dir = File(context.getExternalFilesDir(null), "taal_exports")
+        if (!dir.exists()) dir.mkdirs()
+        return File(dir, fileName).absolutePath
     }
 }

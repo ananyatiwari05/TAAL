@@ -1,77 +1,168 @@
 package org.example.project
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
-
-@Preview
 @Composable
-fun guitarBeatsEditor() {
-    Box(modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.8f)) {
-        Column (
+fun GuitarBeatsEditor(
+    audioPlayer: AudioPlayer,
+    state: GuitarEditorState,
+    onSave: (GuitarEditorState) -> Unit,
+    onClose: () -> Unit
+) {
+
+    var editorState by remember { mutableStateOf(state) }
+
+    LaunchedEffect(state) {
+        editorState = state
+    }
+
+    val playing = remember { mutableStateOf(false) }
+    var currentStep by remember { mutableStateOf(0) }
+
+    LaunchedEffect(playing.value) {
+
+        if (!playing.value) return@LaunchedEffect
+
+        val bpm = 60
+        val stepDuration = 60000L / (bpm * 4)
+
+        while (playing.value) {
+
+            editorState.grid.forEachIndexed { row, cols ->
+
+                cols.forEachIndexed { col, isActive ->
+
+                    if (isActive && col == currentStep) {
+                        val note = audioPlayer.getGuitarNoteByIndex(row)
+                        audioPlayer.playSound(note)
+                    }
+                }
+            }
+
+            delay(stepDuration)
+            currentStep = (currentStep + 1) % editorState.cols
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth(0.95f)
+            .fillMaxHeight(0.8f)
+    ) {
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF2B2B2B))
                 .padding(12.dp)
         ) {
 
-            TopBar()
-            Spacer(modifier = Modifier.width(10.dp))
+            TopBar(
+                onPlay = { playing.value = !playing.value },
+                onClose = { onClose() },
+                onSave = { onSave(editorState) },
+                onDelete = {
+                    editorState.grid.forEach { row ->
+                        for (i in row.indices) row[i] = false
+                    }
+                },
+                onAdd = {
+                    editorState.grid.forEach { row ->
+                        for (i in row.indices) row[i] = false
+                    }
+                }
+            )
 
-            Row (
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF2B2B2B))
                     .padding(12.dp)
-            ){
-                Column (
-                    modifier = Modifier
-                        .width(75.dp)
-                )
-                {
-                    LeftPanel()
+            ) {
+
+                Column(modifier = Modifier.width(75.dp)) {
+                    LeftPanel(rows = editorState.rows)
                 }
+
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    PatternGrid()
+
+                    PatternGrid(
+                        state = editorState,
+                        currentStep = currentStep,
+                        onToggle = { row, col ->
+
+                            editorState.grid[row][col] =
+                                !editorState.grid[row][col]
+
+                            if (editorState.grid[row][col]) {
+                                val note = audioPlayer.getGuitarNoteByIndex(row)
+                                audioPlayer.playSound(note)
+                            }
+                        }
+                    )
                 }
             }
         }
     }
-
 }
 
 @Composable
-fun LeftPanel() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+fun TopBar(
+    onPlay: () -> Unit,
+    onClose: () -> Unit,
+    onSave: () -> Unit,
+    onDelete: () -> Unit,
+    onAdd: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        repeat(7) {
+
+        IconButton(onClick = onClose) {
+            Icon(Icons.Default.Close, null, tint = Color.White)
+        }
+
+        Row {
+            IconButton(onClick = onPlay) {
+                Icon(Icons.Default.PlayArrow, null, tint = Color.White)
+            }
+
+            IconButton(onClick = onSave) {
+                Icon(Icons.Default.Save, null, tint = Color.White)
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, null, tint = Color.White)
+            }
+
+            IconButton(onClick = onAdd) {
+                Icon(Icons.Default.Add, null, tint = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+fun LeftPanel(rows: Int) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        repeat(rows) {
             Box(
                 modifier = Modifier
                     .size(50.dp)
@@ -83,106 +174,34 @@ fun LeftPanel() {
 }
 
 @Composable
-fun TopBar() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        IconButton(onClick = {  }) {
-            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
-        }
-
-        Row {
-            IconButton(onClick = {  }) {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = Color.White)
-            }
-            IconButton(onClick = {  }) {
-                Icon(Icons.Default.Save, contentDescription = "Save", tint = Color.White)
-            }
-            IconButton(onClick = {  }) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White)
-            }
-            IconButton(onClick = {  }) {
-                Icon(Icons.Default.Add, contentDescription = "Add", tint = Color.White)
-            }
-        }
-    }
-}
-
-@Composable
-fun GridCell(isActive: Boolean) {
-    Box(
-        modifier = Modifier
-            .size(20.dp)
-            .clip(CircleShape)
-            .background(
-                if (isActive) Color(0xFFB55454)
-                else Color(0xFF444444)
-            )
-    )
-}
-
-@Composable
-fun PatternGrid() {
-    val rows = 16
-    val cols = 8
-
-    val grid = List(rows) { row ->
-        List(cols) { col ->
-            col < 2
-        }
-    }
+fun PatternGrid(
+    state: GuitarEditorState,
+    currentStep: Int,
+    onToggle: (Int, Int) -> Unit
+) {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        grid.forEach { row ->
+        state.grid.forEachIndexed { rowIndex, row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { isActive ->
-                    GridCell(isActive)
+                row.forEachIndexed { colIndex, isActive ->
+
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when {
+                                    colIndex == currentStep -> Color.Yellow
+                                    isActive -> Color(0xFFB55454)
+                                    else -> Color(0xFF444444)
+                                }
+                            )
+                            .clickable {
+                                onToggle(rowIndex, colIndex)
+                            }
+                    )
                 }
             }
         }
     }
 }
-
-/*LaunchedEffect(playing) {
-
-    if (!playing) return@LaunchedEffect
-
-    val bpm = 60
-    val stepDuration = 60000L / (bpm * 4)
-
-    var playheadRow = 0
-
-    while (playing) {
-
-        state.grid[playheadRow].forEachIndexed { col, isActive ->
-
-            if (isActive) {
-                audioPlayer.playSound(drumFiles[col])
-            }
-        }
-
-        delay(stepDuration)
-
-        playheadRow = (playheadRow + 1) % state.rows
-    }
-}
-fun GridCell(isActive: Boolean, isPlaying: Boolean) {
-    Box(
-        modifier = Modifier
-            .size(20.dp)
-            .clip(CircleShape)
-            .background(
-                when {
-                    isPlaying -> Color.Yellow
-                    isActive -> Color(0xFFB55454)
-                    else -> Color(0xFF444444)
-                }
-            )
-    )
-}
-*/
-
-
-
-

@@ -24,6 +24,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var authRepo: AuthRepositoryImpl
 
 
+
+
     private val googleSignInLauncher =
         registerForActivityResult(
             androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()

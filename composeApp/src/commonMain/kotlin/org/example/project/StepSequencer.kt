@@ -15,6 +15,8 @@ class StepSequencer(
     private val activeDrumPatterns = mutableListOf<DrumEditorState>()
     private val activePianoPatterns = mutableListOf<PianoEditorState>()
 
+    private val activeGuitarPatterns = mutableListOf<GuitarEditorState>()
+
     fun start() {
 
         if (job != null) return
@@ -25,6 +27,7 @@ class StepSequencer(
 
                 playDrums(step)
                 playPianos(step)
+                playGuitar(step)
 
             }
         }
@@ -80,9 +83,31 @@ class StepSequencer(
 
         }
     }
+    private fun playGuitar(step: Int) {
+
+        val snapshot = activeGuitarPatterns.toList()
+
+        snapshot.forEach { pattern ->
+
+            pattern.grid.forEachIndexed { row, steps ->
+
+                val safeStep = step % steps.size
+
+                if (steps[safeStep]) {
+                    val note = audioPlayer.getGuitarNoteByIndex(row)
+                    audioPlayer.playSound(note)
+                }
+            }
+        }
+    }
+    fun addGuitarPattern(pattern: GuitarEditorState) {
+        activeGuitarPatterns.add(pattern)
+    }
 
     fun clearPatterns() {
         activeDrumPatterns.clear()
         activePianoPatterns.clear()
+        activeGuitarPatterns.clear()
     }
+
 }

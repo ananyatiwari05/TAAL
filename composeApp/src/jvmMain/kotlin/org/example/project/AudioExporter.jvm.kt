@@ -5,6 +5,7 @@ import java.io.File
 import javax.sound.sampled.*
 import kotlin.math.abs
 import dev.atsushieno.ktmidi.*
+import org.example.project.getExportPath
 
 actual class AudioExporter {
 
@@ -66,7 +67,9 @@ actual class AudioExporter {
             }
         }
 
-        writeWav(mixBuffer, sampleRate, outputPath)
+        val safePath = getExportPath(File(outputPath).name)
+        writeWav(mixBuffer, sampleRate, safePath)
+        println("Saved WAV: $safePath")
     }
 
     private fun loadWav(path: String): FloatArray? {
@@ -267,8 +270,9 @@ actual class AudioExporter {
         val bytes = mutableListOf<Byte>()
         music.write(bytes)
 
-        File(outputPath).writeBytes(bytes.toByteArray())
-        println("Saved MIDI at: ${File(outputPath).absolutePath}")
+        val safePath = getExportPath(File(outputPath).name)
+        File(safePath).writeBytes(bytes.toByteArray())
+        println("Saved MIDI at: $safePath")
     }
 
     fun collectDrumMidi(
@@ -386,9 +390,10 @@ actual class AudioExporter {
 
         loadMidiAndPlay(midiPath, buffer, sampleRate, bpm)
 
-       val file = File(outputPath)
-       file.parentFile?.mkdirs()
-
-       writeWav(buffer, sampleRate, file.absolutePath)
+       val safePath = getExportPath(File(outputPath).name)
+       writeWav(buffer, sampleRate, safePath)
+       println("Saved FROM MIDI WAV: $safePath")
     }
+
+
 }

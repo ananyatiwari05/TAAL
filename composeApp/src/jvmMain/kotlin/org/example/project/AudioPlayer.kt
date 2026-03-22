@@ -28,7 +28,8 @@ actual class AudioPlayer {
                 val gain = min + (max - min) * currentVolume
 
                 control.value = gain
-            } catch (_: Exception) {}
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -121,6 +122,36 @@ actual class AudioPlayer {
             val gain = min + (max - min) * currentVolume
 
             control.value = gain
-        } catch (_: Exception) {}
+        } catch (_: Exception) {
+        }
     }
+
+    actual fun getGuitarNoteByIndex(index: Int): String {
+        val notes = listOf(
+            "guitar_d2.wav",
+            "guitar_e2.wav",
+            "guitar_f2.wav",
+            "guitar_g2.wav",
+            "guitar_a2.wav",
+            "guitar_b2.wav",
+            "guitar_c3.wav",
+            "guitar_d3.wav",
+            "guitar_e3.wav",
+            "guitar_f3.wav",
+            "guitar_g3.wav",
+            "guitar_a3.wav",
+            "guitar_b3.wav",
+            "guitar_c4.wav",
+            "guitar_d4.wav",
+            "guitar_e4.wav",
+            "guitar_f4.wav",
+            "guitar_g4.wav",
+            "guitar_a4.wav",
+            "guitar_b4.wav",
+            "guitar_c5.wav"
+        )
+
+        return notes.getOrElse(index) { "guitar_c2.wav" }
+    }
+
 }

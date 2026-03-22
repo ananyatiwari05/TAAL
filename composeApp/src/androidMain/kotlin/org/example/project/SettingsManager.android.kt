@@ -8,6 +8,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 
 
+private val Context.dataStore by preferencesDataStore(name = "app_settings")
+
 actual class SettingsManager(private val context: Context) {
 
     private val MODE_KEY = stringPreferencesKey("mode")

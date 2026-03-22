@@ -180,38 +180,13 @@ fun MusicPadScreen(
     val currentStep by metronome.step.collectAsState()
     var swing by remember { mutableStateOf(0f) }
     var swingEnabled by remember { mutableStateOf(false) }
+    var showGuitarEditor by remember { mutableStateOf(false) }
+    var guitarEditorState by remember { mutableStateOf(GuitarEditorState()) }
 
-    val onExport = {
-        val path = "/tmp/beat_${Clock.System.now().toEpochMilliseconds()}.wav"
+    var showSaveDialog by remember { mutableStateOf(false) }
 
-        val path2 = "/tmp/midi_${Clock.System.now().toEpochMilliseconds()}.mid"
-
-        audioExporter.exportBeat(
-            state = state,
-            categories = tileViewModel.categories,
-            bpm = metronome.bpm,
-            outputPath = path
-        )
-
-        audioExporter.exportMidi(
-
-            state = state,
-            categories = tileViewModel.categories,
-            bpm = metronome.bpm,
-            outputPath = path2
-        )
-
-        audioExporter.exportFromMidi(
-            path2,
-            metronome.bpm,
-            "exports/from_midi.wav"
-        )
-
-        println("EXPORTED: $path2")
-
-
-
-        println("EXPORTED: $path")
+    val onExportClick= {
+        showSaveDialog = true
     }
 
 
@@ -265,7 +240,7 @@ fun MusicPadScreen(
                     swing = it
                     metronome.swing = it
                 },
-                onExportClick = onExport
+                onExportClick = onExportClick
             )
             Spacer(Modifier.height(16.dp))
 
@@ -290,7 +265,13 @@ fun MusicPadScreen(
                             } else if (tile.instrument.name == "drum") {
                                 drumEditorState = tile.beat?.drumPattern ?: DrumEditorState()
                                 showDrumEditor = true
-                            } else {
+                            }
+                            else if (tile.instrument.name == "guitar") {
+                                guitarEditorState = tile.beat?.guitarPattern ?: GuitarEditorState()
+                                showGuitarEditor = true
+                            }
+
+                            else {
                                 showBeatSelector = true
                             }
                         }
@@ -422,6 +403,45 @@ fun MusicPadScreen(
             }
         }
 
+        if (showGuitarEditor && selectedTile != null) {
+            Dialog(onDismissRequest = { showGuitarEditor = false }) {
+
+                GuitarBeatsEditor(
+                    audioPlayer = audioPlayer,
+                    state = guitarEditorState,
+
+                    onSave = { updatedState ->
+
+                        guitarEditorState = updatedState
+
+                        tileViewModel.assignBeat(
+                            selectedCategory!!,
+                            selectedTile!!.id,
+                            Beat(
+                                id = "guitar_${Clock.System.now().toEpochMilliseconds()}",
+                                name = "Guitar Pattern",
+                                guitarPattern = updatedState
+                            )
+                        )
+
+
+                        addTileToBeatEditor(
+                            state,
+                            tileViewModel,
+                            selectedCategory!!,
+                            selectedTile!!.id,
+                            currentStep
+                        )
+
+                        showGuitarEditor = false
+                        selectedTile!!.isEdited.value = true
+                    },
+
+                    onClose = { showGuitarEditor = false }
+                )
+            }
+        }
+
         if (showAudioEditor && selectedTile != null) {
             Dialog(onDismissRequest = { showAudioEditor = false }) {
                 AudioEditor(
@@ -474,44 +494,83 @@ fun MusicPadScreen(
             )
         }
 
+        if (showSaveDialog) {
+            Dialog(onDismissRequest = { showSaveDialog = false }) {
+                Column(
+                    modifier = Modifier
+                        .background(Color(0xFF1E1E1E), RoundedCornerShape(16.dp))
+                        .padding(20.dp)
+                ) {
+
+                    Text("Export Beat", color = Color.White, fontWeight = FontWeight.Bold)
+
+                    Spacer(Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            val fileName = "beat_${Clock.System.now().toEpochMilliseconds()}.wav"
+
+                            audioExporter.exportBeat(
+                                state,
+                                tileViewModel.categories,
+                                metronome.bpm,
+                                fileName
+                            )
+
+                            showSaveDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Export as WAV")
+                    }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    Button(
+                        onClick = {
+                            val fileName = "midi_${Clock.System.now().toEpochMilliseconds()}.mid"
+
+                            audioExporter.exportMidi(
+                                state,
+                                tileViewModel.categories,
+                                metronome.bpm,
+                                fileName
+                            )
+
+                            showSaveDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Export as MIDI")
+                    }
+                }
+            }
+        }
+
         LaunchedEffect(currentStep) {
 
             tileViewModel.categories.forEachIndexed { instrumentIndex, category ->
 
                 val tileId = state.grid[instrumentIndex][currentStep] ?: return@forEachIndexed
-                val tile = category.tiles.find { it.id == tileId } ?: return@forEachIndexed
 
+                val tile = category.tiles.find { it.id == tileId } ?: return@forEachIndexed
                 val beat = tile.beat
 
                 when {
+
+                    beat?.guitarPattern != null -> {
+                        sequencer.addGuitarPattern(beat.guitarPattern)
+                    }
+
+                    beat?.drumPattern != null -> {
+                        sequencer.addDrumPattern(beat.drumPattern)
+                    }
+
                     beat?.pianoPattern != null -> {
                         sequencer.addPianoPattern(beat.pianoPattern)
                     }
 
-                    beat?.drumPattern != null -> {
-                        sequencer.clearPatterns()
-
-                        tileViewModel.categories.forEachIndexed { instrumentIndex, category ->
-
-                            val tileId = state.grid[instrumentIndex][currentStep] ?: return@forEachIndexed
-                            val tile = category.tiles.find { it.id == tileId } ?: return@forEachIndexed
-
-                            val beat = tile.beat
-
-                            if (beat?.drumPattern != null) {
-                                sequencer.addDrumPattern(beat.drumPattern)
-                            }
-
-                            if (beat?.pianoPattern != null) {
-                                sequencer.addPianoPattern(beat.pianoPattern)
-                            }
-                        }
-                    }
-
                     beat?.fileName != null -> {
-                        val velocity = state.velocityGrid[instrumentIndex][currentStep]
-
-                        audioPlayer.setVolume(velocity)
 
                         val file = beat.fileName
 
@@ -601,6 +660,12 @@ fun TopBar(
                     IconButton(onClick = onExportClick) {
                         Icon(Icons.Default.Save, "Export", tint = Color.White)
                     }
+                }
+
+                IconButton(onClick = {
+                    openExportsFolder()
+                }) {
+                    Icon(Icons.Default.Folder, contentDescription = "Open Exports", tint = Color.White)
                 }
 
 
@@ -699,14 +764,28 @@ fun SoundGrid(
 
                                 scope.launch {
 
-                                    if (beat?.pianoPattern != null) {
+                                    if (beat?.guitarPattern != null) {
+
+                                        val pattern = beat.guitarPattern
+
+                                        pattern.grid.forEachIndexed { row, cols ->
+
+                                            cols.forEachIndexed { col, isActive ->
+
+                                                if (isActive) {
+                                                    val note = audioPlayer.getGuitarNoteByIndex(row)
+                                                    audioPlayer.playSound(note)
+                                                }
+                                            }
+                                        }
+
+                                    } else if (beat?.pianoPattern != null) {
                                         sequencer.addPianoPattern(beat.pianoPattern)
 
                                     } else if (beat?.drumPattern != null) {
                                         sequencer.addDrumPattern(beat.drumPattern)
-                                    }
 
-                                    else if (beat?.fileName != null) {
+                                    } else if (beat?.fileName != null) {
 
                                         val file = beat.fileName
 
@@ -715,32 +794,16 @@ fun SoundGrid(
                                         } else {
                                             audioPlayer.playSound(file)
                                         }
+
                                     } else {
 
                                         when (tile.instrument.name) {
-                                            "drum" -> audioPlayer.playSound("kick.wav")
-                                            "piano" -> audioPlayer.playSound("piano_c4.wav")
-                                            "harmonium" -> audioPlayer.playSound("piano_c3.wav")
-                                            "violin" -> audioPlayer.playSound("piano_g4.wav")
+                                            "drum" -> audioPlayer.playSound("kick")
+                                            "piano" -> audioPlayer.playSound("piano_c4")
+                                            "harmonium" -> audioPlayer.playSound("piano_c3")
+                                            "violin" -> audioPlayer.playSound("piano_g4")
                                         }
                                     }
-
-                                    val duration = when {
-                                        beat?.pianoPattern != null -> {
-                                            val stepDuration = 60000L / (metronome.bpm * 4)
-                                            stepDuration * beat.pianoPattern.cols
-                                        }
-
-                                        beat?.drumPattern != null -> {
-                                            val stepDuration = 60000L / (metronome.bpm * 4)
-                                            stepDuration * beat.drumPattern.cols
-                                        }
-
-                                        else -> 400L
-                                    }
-
-                                    delay(duration)
-                                    activeTiles = activeTiles - tile.id
                                 }
                             },
                             onLongPress = { onLongPress(category.title, tile) },

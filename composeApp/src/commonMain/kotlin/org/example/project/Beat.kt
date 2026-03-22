@@ -6,7 +6,8 @@ data class Beat(
     val fileName: String? = null,
     val steps: MutableList<Boolean> = MutableList(16) { false },
     val drumPattern: DrumEditorState? = null,
-    val pianoPattern: PianoEditorState? = null
+    val pianoPattern: PianoEditorState? = null,
+    val guitarPattern: GuitarEditorState? = null
 ) {
 
     fun deepCopy(): Beat {
@@ -16,7 +17,8 @@ data class Beat(
             fileName = fileName,
             steps = steps.toMutableList(),
             drumPattern = drumPattern?.deepCopy(),
-            pianoPattern = pianoPattern?.deepCopy()
+            pianoPattern = pianoPattern?.deepCopy(),
+            guitarPattern = guitarPattern?.deepCopy()
         )
     }
 }
