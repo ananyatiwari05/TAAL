@@ -418,3 +418,24 @@ welp things are getting real now 👀 guitar implementation has started which is
 offline meets are helping a lot now — work feels faster, fun and chaotic at the same time 🔥  
 bridge is still haunting us but we’re getting there… slow but steady 🚀
 
+## Devlog #12
+*23-03-2026* ~by [Anshul Badhani](https://www.github.com/anshulbadhani)
+- [Tanishq](https://github.com/Tanishq172006)
+  - Added functionality for save the processed audio in terms of a  `.wav` or `.midi`
+  - Added a folder button, which takes you to where your audio is saved in both android and desktop
+  - Added guitar notes and functionality for the guitar beat editor
+  - Refactored and improved the UI
+  - Improved the overall main logic
+  - Finally generated the `.apk` and `.deb` file for the app
+
+- [Lavanya](https://www.github.com/Lavanya24R)  
+  - Created the info button which tells about our app
+
+- [Ananya](https://github.com/ananyatiwari05)  
+  - Worked on guitar beat editor UI 
+  - Added some functionalities
+
+- [Anshul](https://www.github.com/anshulbadhani) 
+  - gave up on audio engine and his sanity 🤪
+
+This might be our final day, because our exams will start from tomorrow. Therefore, the next step for us would be to make a demo video and post it. This was indeed a really nice project to work on. The teammates, the shared vision, the co-ordination, the team communication. It the best from everyone's side. And now, looking back, a month ago nothing like this existed and now, we can load the application to our phones, make some basic beats. Personally speaking, I'm really happy with how it came out. We have a lot of work to pull of still, to get to what we imagined and it will happen eventually. We will try our best to maintain this project in the future too.
