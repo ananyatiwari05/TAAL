@@ -160,6 +160,10 @@ compose.desktop {
             macOS {
                 iconFile.set(project.file("src/jvmMain/resources/logo.icns"))
             }
+
+            buildTypes.release.proguard {
+                isEnabled.set(false)
+            }
         }
     }
 }
