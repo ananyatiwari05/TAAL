@@ -134,7 +134,6 @@ dependencies {
 }
 
 compose.desktop {
-
     application {
 
         mainClass = "org.example.project.MainKt"
@@ -149,6 +148,18 @@ compose.desktop {
 
             packageName = "TAAL"
             packageVersion = "1.0.0"
+
+            linux {
+                iconFile.set(project.file("src/jvmMain/resources/logo.png"))
+            }
+
+            windows {
+                iconFile.set(project.file("src/jvmMain/resources/logo.ico"))
+            }
+
+            macOS {
+                iconFile.set(project.file("src/jvmMain/resources/logo.icns"))
+            }
         }
     }
 }
