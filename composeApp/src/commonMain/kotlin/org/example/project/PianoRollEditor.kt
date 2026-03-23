@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -34,28 +35,28 @@ import org.example.project.AudioPlayer
 import org.example.project.PianoEditorState
 
 val pianoNotes = listOf(
-    "piano_a2.wav",
-    "piano_a3.wav",
-    "piano_a4.wav",
-    "piano_b2.wav",
-    "piano_b3.wav",
-    "piano_b4.wav",
-    "piano_c2.wav",
-    "piano_c3.wav",
-    "piano_b4.wav",
-    "piano_c5.wav",
-    "piano_d2.wav",
-    "piano_d3.wav",
-    "piano_d4.wav",
-    "piano_e2.wav",
-    "piano_e3.wav",
-    "piano_e4.wav",
-    "piano_f2.wav",
-    "piano_f3.wav",
-    "piano_f4.wav",
-    "piano_g2.wav",
-    "piano_g3.wav",
-    "piano_g4.wav"
+    "piano_a2",
+    "piano_a3",
+    "piano_a4",
+    "piano_b2",
+    "piano_b3",
+    "piano_b4",
+    "piano_c2",
+    "piano_c3",
+    "piano_b4",
+    "piano_c5",
+    "piano_d2",
+    "piano_d3",
+    "piano_d4",
+    "piano_e2",
+    "piano_e3",
+    "piano_e4",
+    "piano_f2",
+    "piano_f3",
+    "piano_f4",
+    "piano_g2",
+    "piano_g3",
+    "piano_g4"
 )
 
 @Composable
@@ -179,7 +180,9 @@ fun VerticalPianoKeys(audioPlayer: AudioPlayer) {
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
-        pianoNotes.forEach { note ->
+        val notes = remember { pianoNotes.toList() }
+
+        notes.forEach { note ->
 
             Box(
                 modifier = Modifier
@@ -187,7 +190,11 @@ fun VerticalPianoKeys(audioPlayer: AudioPlayer) {
                     .height(24.dp)
                     .background(Color.White, RoundedCornerShape(4.dp))
                     .clickable {
-                        audioPlayer.playSound(note)
+                        try {
+                            audioPlayer.playSound(note)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
             )
         }

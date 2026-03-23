@@ -1,11 +1,20 @@
 package org.example.project
 
-
 import java.io.File
 import javax.sound.sampled.*
 import kotlin.math.abs
 import dev.atsushieno.ktmidi.*
 import org.example.project.getExportPath
+
+val guitarNotes = listOf(
+    "guitar_a2.wav","guitar_a3.wav","guitar_a4.wav",
+    "guitar_b2.wav","guitar_b3.wav","guitar_b4.wav",
+    "guitar_c3.wav","guitar_c4.wav","guitar_c5.wav",
+    "guitar_d2.wav","guitar_d3.wav","guitar_d4.wav",
+    "guitar_e2.wav","guitar_e3.wav","guitar_e4.wav",
+    "guitar_f2.wav","guitar_f3.wav","guitar_f4.wav",
+    "guitar_g2.wav","guitar_g3.wav","guitar_g4.wav"
+)
 
 actual class AudioExporter {
 
@@ -18,16 +27,17 @@ actual class AudioExporter {
 
         val sampleRate = 48000
         val stepDurationSec = 60.0 / (bpm * 4)
-        val totalSteps = 32
-
-        val totalSamples = (sampleRate * stepDurationSec * totalSteps).toInt()
+        val totalSteps = state.grid[0].size
+        val tailSeconds = 8
+        val totalSamples = (sampleRate * (stepDurationSec * totalSteps + tailSeconds)).toInt()
         val mixBuffer = FloatArray(totalSamples)
 
         for (instrumentIndex in categories.indices) {
-
             val category = categories[instrumentIndex]
 
             for (step in 0 until totalSteps) {
+
+                println("STEP: $step | instrument: $instrumentIndex")
 
                 val tileId = state.grid[instrumentIndex][step] ?: continue
                 val tile = category.tiles.find { it.id == tileId } ?: continue
@@ -38,21 +48,30 @@ actual class AudioExporter {
 
                 when {
                     beat.drumPattern != null -> {
+                        println("🥁 Drum triggered")
                         mixDrumPattern(beat.drumPattern, startSample, mixBuffer, sampleRate, velocity)
                     }
 
                     beat.pianoPattern != null -> {
+                        println("🎹 Piano triggered")
                         mixPianoPattern(beat.pianoPattern, startSample, mixBuffer, sampleRate, velocity)
                     }
 
+                    beat.guitarPattern != null -> {
+                        println("🎸 Guitar pattern triggered")
+                        mixGuitarPattern(beat.guitarPattern, startSample, mixBuffer, sampleRate, velocity)
+                    }
+
                     beat.fileName != null -> {
+                        println("🎵 File triggered: ${beat.fileName}")
                         val audioData = loadWav(beat.fileName) ?: continue
                         val maxLength = (stepDurationSec * sampleRate).toInt()
 
                         for (i in 0 until minOf(audioData.size, maxLength)) {
                             val index = startSample + i
                             if (index >= mixBuffer.size) break
-                            mixBuffer[index] += audioData[i] * velocity
+                            mixBuffer[index] = (mixBuffer[index] + audioData[i] * velocity)
+                                .coerceIn(-1f, 1f)
                         }
                     }
                 }
@@ -60,133 +79,20 @@ actual class AudioExporter {
         }
 
         val max = mixBuffer.maxOfOrNull { abs(it) } ?: 0f
+        println("🔥 FINAL BUFFER MAX = $max")
+
+        val gain = 2.5f
 
         if (max > 0f) {
             for (i in mixBuffer.indices) {
-                mixBuffer[i] /= max
+                mixBuffer[i] = (mixBuffer[i] / max * gain)
+                    .coerceIn(-1f, 1f)
             }
         }
 
         val safePath = getExportPath(File(outputPath).name)
         writeWav(mixBuffer, sampleRate, safePath)
-        println("Saved WAV: $safePath")
-    }
-
-    private fun loadWav(path: String): FloatArray? {
-        return try {
-
-            val audioInput = if (path.startsWith("/") || path.startsWith("content://")) {
-                AudioSystem.getAudioInputStream(File(path))
-            } else {
-                val resource = javaClass.classLoader.getResource(path) ?: return null
-                AudioSystem.getAudioInputStream(resource)
-            }
-
-            val format = audioInput.format
-
-            val decodedFormat = AudioFormat(
-                AudioFormat.Encoding.PCM_SIGNED,
-                format.sampleRate,
-                16,
-                format.channels,
-                format.channels * 2,
-                format.sampleRate,
-                false
-            )
-
-            val stream = AudioSystem.getAudioInputStream(decodedFormat, audioInput)
-            val bytes = stream.readBytes()
-
-            val samples = FloatArray(bytes.size / 2)
-
-            var sampleIndex = 0
-
-            for (i in bytes.indices step 2) {
-                val sample = (bytes[i + 1].toInt() shl 8) or (bytes[i].toInt() and 0xff)
-                samples[sampleIndex++] = sample / 32768f
-            }
-
-            samples
-
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun writeWav(data: FloatArray, sampleRate: Int, path: String) {
-
-        val byteData = ByteArray(data.size * 2)
-
-        var i = 0
-        data.forEach { sample ->
-            val clamped = (sample.coerceIn(-1f, 1f) * 32767).toInt()
-            byteData[i++] = (clamped and 0xff).toByte()
-            byteData[i++] = ((clamped shr 8) and 0xff).toByte()
-        }
-
-        val format = AudioFormat(sampleRate.toFloat(), 16, 1, true, false)
-        val byteStream = byteData.inputStream()
-        val audioStream = AudioInputStream(byteStream, format, data.size.toLong())
-
-        AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, File(path))
-    }
-
-    fun mixDrumPattern(
-        pattern: DrumEditorState,
-        startSample: Int,
-        buffer: FloatArray,
-        sampleRate: Int,
-        velocity: Float
-    ) {
-        val stepDuration = sampleRate / 4
-
-        val drumFiles = listOf(
-            "kick.wav","snare.wav","closedhat.wav",
-            "openhat.wav","tom.wav","crash.wav",
-            "ride.wav","clap.wav"
-        )
-
-        pattern.grid.forEachIndexed { row, steps ->
-            val sound = loadWav(drumFiles[row]) ?: return@forEachIndexed
-
-            steps.forEachIndexed { col, active ->
-                if (!active) return@forEachIndexed
-
-                val offset = startSample + col * stepDuration
-
-                for (i in sound.indices) {
-                    val index = offset + i
-                    if (index >= buffer.size) break
-                    buffer[index] += sound[i] * velocity
-                }
-            }
-        }
-    }
-
-    fun mixPianoPattern(
-        pattern: PianoEditorState,
-        startSample: Int,
-        buffer: FloatArray,
-        sampleRate: Int,
-        velocity: Float
-    ) {
-        val stepDuration = sampleRate / 4
-
-        pattern.grid.forEachIndexed { row, steps ->
-            val sound = loadWav(pianoNotes[row]) ?: return@forEachIndexed
-
-            steps.forEachIndexed { col, active ->
-                if (!active) return@forEachIndexed
-
-                val offset = startSample + col * stepDuration
-
-                for (i in sound.indices) {
-                    val index = offset + i
-                    if (index >= buffer.size) break
-                    buffer[index] += sound[i] * velocity
-                }
-            }
-        }
+        println("✅ WAV EXPORTED: $safePath")
     }
 
     actual fun exportMidi(
@@ -213,6 +119,8 @@ actual class AudioExporter {
 
             for (step in 0 until totalSteps) {
 
+                println("MIDI STEP: $step | instrument: $instrumentIndex")
+
                 val tileId = state.grid[instrumentIndex][step] ?: continue
                 val tile = tileMap[tileId] ?: continue
                 val beat = tile.beat ?: continue
@@ -224,17 +132,25 @@ actual class AudioExporter {
 
                 when {
                     beat.drumPattern != null -> {
+                        println("🥁 MIDI Drum")
                         collectDrumMidi(messages, beat.drumPattern, tick, stepTicks, velocity)
                     }
 
                     beat.pianoPattern != null -> {
+                        println("🎹 MIDI Piano")
                         collectPianoMidi(messages, beat.pianoPattern, tick, stepTicks, velocity)
                     }
 
+                    beat.guitarPattern != null -> {
+                        println("🎸 MIDI Guitar")
+                        collectGuitarMidi(messages, beat.guitarPattern, tick, stepTicks, velocity)
+                    }
+
                     beat.fileName != null -> {
+                        println("🎵 MIDI File trigger")
                         val note = (60 + instrumentIndex).coerceIn(0, 127)
-                        messages.add(tick to byteArrayOf((0x90).toByte(), note.toByte(), velocity.toByte()))
-                        messages.add((tick + stepTicks / 2) to byteArrayOf((0x80).toByte(), note.toByte(), 0))
+                        messages.add(tick to byteArrayOf(0x90.toByte(), note.toByte(), velocity.toByte()))
+                        messages.add((tick + stepTicks / 2) to byteArrayOf(0x80.toByte(), note.toByte(), 0))
                     }
                 }
             }
@@ -256,11 +172,7 @@ actual class AudioExporter {
             track.messages.add(
                 MidiMessage(
                     delta,
-                    MidiEvent(
-                        status,
-                        data1,
-                        data2
-                    )
+                    MidiEvent(status, data1, data2)
                 )
             )
         }
@@ -272,10 +184,234 @@ actual class AudioExporter {
 
         val safePath = getExportPath(File(outputPath).name)
         File(safePath).writeBytes(bytes.toByteArray())
-        println("Saved MIDI at: $safePath")
     }
 
-    fun collectDrumMidi(
+    private fun loadWav(path: String): FloatArray? {
+        return try {
+
+            val file = if (path.startsWith("/") || path.startsWith("content://")) {
+                File(path)
+            } else {
+                val resource = javaClass.classLoader.getResource(path) ?: return null
+                File(resource.toURI())
+            }
+
+            val audioInput = AudioSystem.getAudioInputStream(file)
+            val baseFormat = audioInput.format
+
+            val decodedFormat = AudioFormat(
+                AudioFormat.Encoding.PCM_SIGNED,
+                baseFormat.sampleRate,
+                16,
+                baseFormat.channels,
+                baseFormat.channels * 2,
+                baseFormat.sampleRate,
+                false
+            )
+
+            val stream = AudioSystem.getAudioInputStream(decodedFormat, audioInput)
+            val bytes = stream.readBytes()
+
+            val channels = decodedFormat.channels
+            val totalSamples = bytes.size / (2 * channels)
+
+            val samples = FloatArray(totalSamples)
+            var sampleIndex = 0
+
+            for (i in 0 until bytes.size step 2 * channels) {
+                var sum = 0f
+
+                for (ch in 0 until channels) {
+                    val low = bytes[i + ch * 2].toInt() and 0xff
+                    val high = bytes[i + ch * 2 + 1].toInt()
+                    val sample = (high shl 8) or low
+                    sum += sample / 32768f
+                }
+
+                samples[sampleIndex++] = sum / channels
+            }
+
+            val maxVal = samples.maxOfOrNull { abs(it) } ?: 0f
+            println("📊 WAV LOADED: $path | max amplitude = $maxVal")
+
+            samples
+
+        } catch (e: Exception) {
+            println("❌ FAILED TO LOAD: $path")
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun mixGuitarPattern(
+        pattern: GuitarEditorState,
+        startSample: Int,
+        buffer: FloatArray,
+        sampleRate: Int,
+        velocity: Float
+    ) {
+        val stepDuration = sampleRate / 4
+
+        pattern.grid.forEachIndexed { row, steps ->
+
+            val fileName = guitarNotes.getOrNull(row) ?: return@forEachIndexed
+            val sound = loadWav(fileName) ?: return@forEachIndexed
+
+            steps.forEachIndexed { col, active ->
+                if (!active) return@forEachIndexed
+
+                println("🎸 Guitar triggered row=$row col=$col file=$fileName")
+
+                val offset = startSample + col * stepDuration
+
+                for (i in sound.indices) {
+                    val index = offset + i
+                    if (index >= buffer.size) break
+
+                    buffer[index] = (buffer[index] + sound[i] * velocity)
+                        .coerceIn(-1f, 1f)
+                }
+            }
+        }
+    }
+    private fun writeWav(data: FloatArray, sampleRate: Int, path: String) {
+
+        val byteData = ByteArray(data.size * 4)
+
+        var i = 0
+        data.forEach { sample ->
+            val clamped = (sample.coerceIn(-1f, 1f) * 32767).toInt()
+
+            val low = (clamped and 0xff).toByte()
+            val high = ((clamped shr 8) and 0xff).toByte()
+
+            byteData[i++] = low
+            byteData[i++] = high
+            byteData[i++] = low
+            byteData[i++] = high
+        }
+
+        val format = AudioFormat(sampleRate.toFloat(), 16, 2, true, false)
+        val byteStream = byteData.inputStream()
+        val audioStream = AudioInputStream(byteStream, format, data.size.toLong())
+
+        AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, File(path))
+    }
+
+    private fun mixDrumPattern(
+        pattern: DrumEditorState,
+        startSample: Int,
+        buffer: FloatArray,
+        sampleRate: Int,
+        velocity: Float
+    ) {
+        val stepDuration = sampleRate / 4
+
+        val drumFiles = listOf(
+            "kick.wav","snare.wav","closedhat.wav",
+            "openhat.wav","tom.wav","crash.wav",
+            "ride.wav","clap.wav"
+        )
+
+        pattern.grid.forEachIndexed { row, steps ->
+            val file = drumFiles.getOrNull(row) ?: return@forEachIndexed
+            val sound = loadWav(file) ?: return@forEachIndexed
+
+            steps.forEachIndexed { col, active ->
+                if (!active) return@forEachIndexed
+
+                println("🥁 Drum row=$row col=$col file=$file")
+
+                val offset = startSample + col * stepDuration
+
+                for (i in sound.indices) {
+                    val index = offset + i
+                    if (index >= buffer.size) break
+                    buffer[index] = (buffer[index] + sound[i] * velocity)
+                        .coerceIn(-1f, 1f)
+                }
+            }
+        }
+    }
+
+    private fun mixPianoPattern(
+        pattern: PianoEditorState,
+        startSample: Int,
+        buffer: FloatArray,
+        sampleRate: Int,
+        velocity: Float
+    ) {
+        val stepDuration = sampleRate / 4
+
+        pattern.grid.forEachIndexed { row, steps ->
+            val file = pianoNotes.getOrNull(row) ?: return@forEachIndexed
+            val sound = loadWav(file) ?: return@forEachIndexed
+
+            steps.forEachIndexed { col, active ->
+                if (!active) return@forEachIndexed
+
+                println("🎹 Piano row=$row col=$col file=$file")
+
+                val offset = startSample + col * stepDuration
+
+                for (i in sound.indices) {
+                    val index = offset + i
+                    if (index >= buffer.size) break
+                    buffer[index] = (buffer[index] + sound[i] * velocity)
+                        .coerceIn(-1f, 1f)
+                }
+            }
+        }
+    }
+
+    private fun collectPianoMidi(
+        messages: MutableList<Pair<Int, ByteArray>>,
+        pattern: PianoEditorState,
+        startTick: Int,
+        stepTicks: Int,
+        velocity: Int
+    ) {
+        pattern.grid.forEachIndexed { row, steps ->
+
+            val note = (60 + row).coerceIn(0, 127)
+
+            steps.forEachIndexed { col, active ->
+                if (!active) return@forEachIndexed
+
+                val tick = startTick + col * stepTicks
+
+                messages.add(tick to byteArrayOf(0x90.toByte(), note.toByte(), velocity.toByte()))
+                messages.add((tick + stepTicks) to byteArrayOf(0x80.toByte(), note.toByte(), 0))
+            }
+        }
+    }
+
+    private fun collectGuitarMidi(
+        messages: MutableList<Pair<Int, ByteArray>>,
+        pattern: GuitarEditorState,
+        startTick: Int,
+        stepTicks: Int,
+        velocity: Int
+    ) {
+
+        pattern.grid.forEachIndexed { row, steps ->
+
+            if (row >= guitarNotes.size) return@forEachIndexed
+
+            val note = (60 + row).coerceIn(0, 127)
+
+            steps.forEachIndexed { col, active ->
+                if (!active) return@forEachIndexed
+
+                val tick = startTick + col * stepTicks
+
+                messages.add(tick to byteArrayOf(0x90.toByte(), note.toByte(), velocity.toByte()))
+                messages.add((tick + stepTicks) to byteArrayOf(0x80.toByte(), note.toByte(), 0))
+            }
+        }
+    }
+
+    private fun collectDrumMidi(
         messages: MutableList<Pair<Int, ByteArray>>,
         pattern: DrumEditorState,
         startTick: Int,
@@ -292,108 +428,10 @@ actual class AudioExporter {
 
                 val tick = startTick + col * stepTicks
 
-                messages.add(tick to byteArrayOf((0x99).toByte(), note.toByte(), velocity.toByte()))
-                messages.add((tick + stepTicks / 2) to byteArrayOf((0x89).toByte(), note.toByte(), 0))
+                messages.add(tick to byteArrayOf(0x99.toByte(), note.toByte(), velocity.toByte()))
+                messages.add((tick + stepTicks / 2) to byteArrayOf(0x89.toByte(), note.toByte(), 0))
             }
         }
     }
-
-    fun collectPianoMidi(
-        messages: MutableList<Pair<Int, ByteArray>>,
-        pattern: PianoEditorState,
-        startTick: Int,
-        stepTicks: Int,
-        velocity: Int
-    ) {
-        pattern.grid.forEachIndexed { row, steps ->
-
-            val note = (60 + row).coerceIn(0, 127)
-
-            steps.forEachIndexed { col, active ->
-                if (!active) return@forEachIndexed
-
-                val tick = startTick + col * stepTicks
-
-                messages.add(tick to byteArrayOf((0x90).toByte(), note.toByte(), velocity.toByte()))
-                messages.add((tick + stepTicks) to byteArrayOf((0x80).toByte(), note.toByte(), 0))
-            }
-        }
-    }
-
-
-    fun loadMidiAndPlay(
-        filePath: String,
-        buffer: FloatArray,
-        sampleRate: Int,
-        bpm: Int
-    ) {
-
-        val music = MidiMusic()
-        val bytes = File(filePath).readBytes().toList()
-        music.read(bytes)
-
-        val ticksPerQuarter = music.deltaTimeSpec
-        val secondsPerTick = 60.0 / (bpm * ticksPerQuarter)
-
-        music.tracks.forEach { track ->
-
-            var currentTick = 0
-
-            track.messages.forEach { msg ->
-
-                currentTick += msg.deltaTime
-
-                val event = msg.event
-
-                val status = event.statusByte.toInt() and 0xFF
-                val note = event.msb.toInt() and 0xFF
-                val velocity = (event.lsb.toInt() and 0xFF) / 127f
-
-                if ((status and 0xF0) == 0x90 && velocity > 0f) {
-
-                    val timeInSeconds = currentTick * secondsPerTick
-                    val sampleIndex = (timeInSeconds * sampleRate).toInt()
-
-                    val sound = when (note) {
-                        36 -> loadWav("kick.wav")
-                        38 -> loadWav("snare.wav")
-                        42 -> loadWav("closedhat.wav")
-                        46 -> loadWav("openhat.wav")
-                        45 -> loadWav("tom.wav")
-                        49 -> loadWav("crash.wav")
-                        51 -> loadWav("ride.wav")
-                        39 -> loadWav("clap.wav")
-                        else -> {
-                            val pianoIndex = note - 60
-                            loadWav(pianoNotes.getOrNull(pianoIndex) ?: return@forEach)
-                        }
-                    } ?: return@forEach
-
-                    for (i in sound.indices) {
-                        val index = sampleIndex + i
-                        if (index >= buffer.size) break
-                        buffer[index] += sound[i] * velocity
-                    }
-                }
-            }
-        }
-    }
-
-   actual fun exportFromMidi(
-        midiPath: String,
-        bpm: Int,
-        outputPath: String
-    ) {
-        val sampleRate = 48000
-        val durationSec = 10
-        val buffer = FloatArray(sampleRate * durationSec)
-
-        loadMidiAndPlay(midiPath, buffer, sampleRate, bpm)
-
-       val safePath = getExportPath(File(outputPath).name)
-       writeWav(buffer, sampleRate, safePath)
-       println("Saved FROM MIDI WAV: $safePath")
-    }
-
 
 }

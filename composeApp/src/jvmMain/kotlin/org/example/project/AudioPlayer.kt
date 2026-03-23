@@ -151,7 +151,7 @@ actual class AudioPlayer {
             "guitar_c5.wav"
         )
 
-        return notes.getOrElse(index) { "guitar_c2.wav" }
+        return notes.getOrElse(index) { "guitar_c3.wav" }
     }
 
 }

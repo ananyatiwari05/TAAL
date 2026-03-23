@@ -14,11 +14,6 @@ expect class AudioExporter {
         outputPath: String
     )
 
-    fun exportFromMidi(
-        midiPath: String,
-        bpm: Int,
-        outputPath: String
-    )
 
 
 }

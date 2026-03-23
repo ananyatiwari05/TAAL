@@ -17,9 +17,11 @@ actual class AudioExporter(private val context: Context) {
 
         val sampleRate = 48000
         val stepDurationSec = 60.0 / (bpm * 4)
-        val totalSteps = 32
 
-        val totalSamples = (sampleRate * stepDurationSec * totalSteps).toInt()
+        val totalSteps = state.grid[0].size
+        val tailSeconds = 3
+
+        val totalSamples = (sampleRate * (stepDurationSec * totalSteps + tailSeconds)).toInt()
         val mixBuffer = FloatArray(totalSamples)
 
         for (instrumentIndex in categories.indices) {
@@ -44,14 +46,19 @@ actual class AudioExporter(private val context: Context) {
                         mixPianoPattern(beat.pianoPattern, startSample, mixBuffer, sampleRate, velocity)
                     }
 
+                    beat.guitarPattern != null -> {
+                        mixGuitarPattern(beat.guitarPattern, startSample, mixBuffer, sampleRate, velocity)
+                    }
+
                     beat.fileName != null -> {
                         val audioData = loadWav(beat.fileName) ?: continue
-                        val maxLength = (stepDurationSec * sampleRate).toInt()
 
-                        for (i in 0 until minOf(audioData.size, maxLength)) {
+                        for (i in audioData.indices) {
                             val index = startSample + i
                             if (index >= mixBuffer.size) break
-                            mixBuffer[index] += audioData[i] * velocity
+
+                            mixBuffer[index] = (mixBuffer[index] + audioData[i] * velocity)
+                                .coerceIn(-1f, 1f)
                         }
                     }
                 }
@@ -59,15 +66,17 @@ actual class AudioExporter(private val context: Context) {
         }
 
         val max = mixBuffer.maxOfOrNull { abs(it) } ?: 0f
+        val gain = 2.5f
+
         if (max > 0f) {
             for (i in mixBuffer.indices) {
-                mixBuffer[i] /= max
+                mixBuffer[i] = (mixBuffer[i] / max * gain)
+                    .coerceIn(-1f, 1f)
             }
         }
 
         val safePath = getSafePath(File(outputPath).name)
         writeWav(mixBuffer, sampleRate, safePath)
-        println("Saved WAV: $safePath")
     }
 
     actual fun exportMidi(
@@ -126,7 +135,6 @@ actual class AudioExporter(private val context: Context) {
         var lastTime = 0
 
         messages.forEach { (time, msg) ->
-
             val delta = time - lastTime
             lastTime = time
 
@@ -134,9 +142,7 @@ actual class AudioExporter(private val context: Context) {
             val data1 = msg[1].toInt() and 0xFF
             val data2 = msg[2].toInt() and 0xFF
 
-            track.messages.add(
-                MidiMessage(delta, MidiEvent(status, data1, data2))
-            )
+            track.messages.add(MidiMessage(delta, MidiEvent(status, data1, data2)))
         }
 
         music.tracks.add(track)
@@ -146,43 +152,95 @@ actual class AudioExporter(private val context: Context) {
 
         val safePath = getSafePath(File(outputPath).name)
         File(safePath).writeBytes(bytes.toByteArray())
-        println("Saved MIDI: $safePath")
-    }
-
-    actual fun exportFromMidi(
-        midiPath: String,
-        bpm: Int,
-        outputPath: String
-    ) {
-        val sampleRate = 48000
-        val durationSec = 10
-        val buffer = FloatArray(sampleRate * durationSec)
-
-        loadMidiAndPlay(midiPath, buffer, sampleRate, bpm)
-
-        val safePath = getSafePath(File(outputPath).name)
-        writeWav(buffer, sampleRate, safePath)
-        println("Saved FROM MIDI WAV: $safePath")
     }
 
     private fun loadWav(path: String): FloatArray? {
         return try {
-            val bytes = File(path).readBytes()
-            val headerSize = 44
-            val samples = FloatArray((bytes.size - headerSize) / 2)
 
-            var idx = 0
-            var i = headerSize
+            val name = path.substringBeforeLast(".")
+            val resId = context.resources.getIdentifier(name, "raw", context.packageName)
+            if (resId == 0) return null
 
-            while (i < bytes.size - 1) {
-                val sample = (bytes[i + 1].toInt() shl 8) or (bytes[i].toInt() and 0xff)
-                samples[idx++] = sample / 32768f
-                i += 2
+            val fileDescriptor = context.resources.openRawResourceFd(resId)
+
+            val extractor = android.media.MediaExtractor()
+            extractor.setDataSource(fileDescriptor.fileDescriptor, fileDescriptor.startOffset, fileDescriptor.length)
+
+            var format: android.media.MediaFormat? = null
+            var trackIndex = -1
+
+            for (i in 0 until extractor.trackCount) {
+                val f = extractor.getTrackFormat(i)
+                val mime = f.getString(android.media.MediaFormat.KEY_MIME) ?: continue
+                if (mime.startsWith("audio/")) {
+                    format = f
+                    trackIndex = i
+                    break
+                }
             }
 
-            samples
+            if (trackIndex == -1 || format == null) return null
+
+            extractor.selectTrack(trackIndex)
+
+            val codec = android.media.MediaCodec.createDecoderByType(format.getString(android.media.MediaFormat.KEY_MIME)!!)
+            codec.configure(format, null, null, 0)
+            codec.start()
+
+            val outputBufferInfo = android.media.MediaCodec.BufferInfo()
+            val samples = mutableListOf<Float>()
+
+            var isEOS = false
+
+            while (true) {
+
+                if (!isEOS) {
+                    val inputIndex = codec.dequeueInputBuffer(10000)
+                    if (inputIndex >= 0) {
+                        val inputBuffer = codec.getInputBuffer(inputIndex)!!
+                        val sampleSize = extractor.readSampleData(inputBuffer, 0)
+
+                        if (sampleSize < 0) {
+                            codec.queueInputBuffer(inputIndex, 0, 0, 0, android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM)
+                            isEOS = true
+                        } else {
+                            codec.queueInputBuffer(inputIndex, 0, sampleSize, extractor.sampleTime, 0)
+                            extractor.advance()
+                        }
+                    }
+                }
+
+                val outputIndex = codec.dequeueOutputBuffer(outputBufferInfo, 10000)
+
+                if (outputIndex >= 0) {
+                    val outputBuffer = codec.getOutputBuffer(outputIndex)!!
+                    val chunk = ByteArray(outputBufferInfo.size)
+                    outputBuffer.get(chunk)
+                    outputBuffer.clear()
+
+                    var i = 0
+                    while (i < chunk.size - 1) {
+                        val sample = (chunk[i + 1].toInt() shl 8) or (chunk[i].toInt() and 0xff)
+                        samples.add(sample / 32768f)
+                        i += 2
+                    }
+
+                    codec.releaseOutputBuffer(outputIndex, false)
+
+                    if (outputBufferInfo.flags and android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {
+                        break
+                    }
+                }
+            }
+
+            codec.stop()
+            codec.release()
+            extractor.release()
+
+            samples.toFloatArray()
 
         } catch (e: Exception) {
+            e.printStackTrace()
             null
         }
     }
@@ -258,6 +316,52 @@ actual class AudioExporter(private val context: Context) {
         return header
     }
 
+    private fun getSafePath(fileName: String): String {
+        val dir = File(context.getExternalFilesDir(null), "taal_exports")
+        if (!dir.exists()) dir.mkdirs()
+        return File(dir, fileName).absolutePath
+    }
+
+    private val guitarNotes = listOf(
+        "guitar_a2.wav","guitar_a3.wav","guitar_a4.wav",
+        "guitar_b2.wav","guitar_b3.wav","guitar_b4.wav",
+        "guitar_c3.wav","guitar_c4.wav","guitar_c5.wav",
+        "guitar_d2.wav","guitar_d3.wav","guitar_d4.wav",
+        "guitar_e2.wav","guitar_e3.wav","guitar_e4.wav",
+        "guitar_f2.wav","guitar_f3.wav","guitar_f4.wav",
+        "guitar_g2.wav","guitar_g3.wav","guitar_g4.wav"
+    )
+
+    fun mixGuitarPattern(
+        pattern: GuitarEditorState,
+        startSample: Int,
+        buffer: FloatArray,
+        sampleRate: Int,
+        velocity: Float
+    ) {
+        val stepDuration = sampleRate / 4
+
+        pattern.grid.forEachIndexed { row, steps ->
+
+            val file = guitarNotes.getOrNull(row) ?: return@forEachIndexed
+            val sound = loadWav(file) ?: return@forEachIndexed
+
+            steps.forEachIndexed { col, active ->
+                if (!active) return@forEachIndexed
+
+                val offset = startSample + col * stepDuration
+
+                for (i in sound.indices) {
+                    val idx = offset + i
+                    if (idx >= buffer.size) break
+
+                    buffer[idx] = (buffer[idx] + sound[i] * velocity)
+                        .coerceIn(-1f, 1f)
+                }
+            }
+        }
+    }
+
     fun mixDrumPattern(
         pattern: DrumEditorState,
         startSample: Int,
@@ -265,20 +369,27 @@ actual class AudioExporter(private val context: Context) {
         sampleRate: Int,
         velocity: Float
     ) {
-        val stepDuration = sampleRate / 4
-        val drumFiles = listOf("kick.wav","snare.wav","closedhat.wav","openhat.wav","tom.wav","crash.wav","ride.wav","clap.wav")
+        val drumFiles = listOf(
+            "kick.wav","snare.wav","closedhat.wav",
+            "openhat.wav","tom.wav","crash.wav",
+            "ride.wav","clap.wav"
+        )
 
         pattern.grid.forEachIndexed { row, steps ->
-            val sound = loadWav(drumFiles[row]) ?: return@forEachIndexed
+            val file = drumFiles.getOrNull(row) ?: return@forEachIndexed
+            val sound = loadWav(file) ?: return@forEachIndexed
 
             steps.forEachIndexed { col, active ->
                 if (!active) return@forEachIndexed
-                val offset = startSample + col * stepDuration
+
+                val offset = startSample + col * (sampleRate / 4)
 
                 for (i in sound.indices) {
                     val idx = offset + i
                     if (idx >= buffer.size) break
-                    buffer[idx] += sound[i] * velocity
+
+                    buffer[idx] = (buffer[idx] + sound[i] * velocity)
+                        .coerceIn(-1f, 1f)
                 }
             }
         }
@@ -291,66 +402,21 @@ actual class AudioExporter(private val context: Context) {
         sampleRate: Int,
         velocity: Float
     ) {
-        val stepDuration = sampleRate / 4
-
         pattern.grid.forEachIndexed { row, steps ->
-            val sound = loadWav(pianoNotes[row]) ?: return@forEachIndexed
+            val file = pianoNotes.getOrNull(row) ?: return@forEachIndexed
+            val sound = loadWav(file) ?: return@forEachIndexed
 
             steps.forEachIndexed { col, active ->
                 if (!active) return@forEachIndexed
-                val offset = startSample + col * stepDuration
+
+                val offset = startSample + col * (sampleRate / 4)
 
                 for (i in sound.indices) {
                     val idx = offset + i
                     if (idx >= buffer.size) break
-                    buffer[idx] += sound[i] * velocity
-                }
-            }
-        }
-    }
 
-    fun loadMidiAndPlay(
-        filePath: String,
-        buffer: FloatArray,
-        sampleRate: Int,
-        bpm: Int
-    ) {
-
-        val music = MidiMusic()
-        val bytes = File(filePath).readBytes().toList()
-        music.read(bytes)
-
-        val secondsPerTick = 60.0 / (bpm * music.deltaTimeSpec)
-
-        music.tracks.forEach { track ->
-
-            var currentTick = 0
-
-            track.messages.forEach { msg ->
-
-                currentTick += msg.deltaTime
-
-                val event = msg.event
-                val status = event.statusByte.toInt() and 0xFF
-                val note = event.msb.toInt() and 0xFF
-                val velocity = (event.lsb.toInt() and 0xFF) / 127f
-
-                if ((status and 0xF0) == 0x90 && velocity > 0f) {
-
-                    val sampleIndex = (currentTick * secondsPerTick * sampleRate).toInt()
-
-                    val sound = when (note) {
-                        36 -> loadWav("kick.wav")
-                        38 -> loadWav("snare.wav")
-                        42 -> loadWav("closedhat.wav")
-                        else -> loadWav(pianoNotes.getOrNull(note - 60) ?: return@forEach)
-                    } ?: return@forEach
-
-                    for (i in sound.indices) {
-                        val idx = sampleIndex + i
-                        if (idx >= buffer.size) break
-                        buffer[idx] += sound[i] * velocity
-                    }
+                    buffer[idx] = (buffer[idx] + sound[i] * velocity)
+                        .coerceIn(-1f, 1f)
                 }
             }
         }
@@ -373,13 +439,8 @@ actual class AudioExporter(private val context: Context) {
 
                 val tick = startTick + col * stepTicks
 
-                messages.add(
-                    tick to byteArrayOf(0x99.toByte(), note.toByte(), velocity.toByte())
-                )
-
-                messages.add(
-                    (tick + stepTicks / 2) to byteArrayOf(0x89.toByte(), note.toByte(), 0)
-                )
+                messages.add(tick to byteArrayOf(0x99.toByte(), note.toByte(), velocity.toByte()))
+                messages.add((tick + stepTicks / 2) to byteArrayOf(0x89.toByte(), note.toByte(), 0))
             }
         }
     }
@@ -400,19 +461,9 @@ actual class AudioExporter(private val context: Context) {
 
                 val tick = startTick + col * stepTicks
 
-                messages.add(
-                    tick to byteArrayOf(0x90.toByte(), note.toByte(), velocity.toByte())
-                )
-
-                messages.add(
-                    (tick + stepTicks) to byteArrayOf(0x80.toByte(), note.toByte(), 0)
-                )
+                messages.add(tick to byteArrayOf(0x90.toByte(), note.toByte(), velocity.toByte()))
+                messages.add((tick + stepTicks) to byteArrayOf(0x80.toByte(), note.toByte(), 0))
             }
         }
-    }
-    private fun getSafePath(fileName: String): String {
-        val dir = File(context.getExternalFilesDir(null), "taal_exports")
-        if (!dir.exists()) dir.mkdirs()
-        return File(dir, fileName).absolutePath
     }
 }

@@ -42,14 +42,16 @@ fun GuitarBeatsEditor(
 
         while (playing.value) {
 
-            editorState.grid.forEachIndexed { row, cols ->
+            val activeRows = editorState.grid.mapIndexedNotNull { row, cols ->
+                if (cols[currentStep]) row else null
+            }
 
-                cols.forEachIndexed { col, isActive ->
-
-                    if (isActive && col == currentStep) {
-                        val note = audioPlayer.getGuitarNoteByIndex(row)
-                        audioPlayer.playSound(note)
-                    }
+            activeRows.forEach { row ->
+                try {
+                    val note = audioPlayer.getGuitarNoteByIndex(row)
+                    audioPlayer.playSound(note)
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
 
