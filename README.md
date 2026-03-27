@@ -93,21 +93,42 @@ TAAL/
 ```
 ---
 
-<h3><b>Screenshots (cheese)</b></h3>
+<h3><b>Screenshots (cheese) 🧀</b></h3>
+
+### Android View 📱
 
 <p align="center">
-  <img src="assets/screenshot1.png" width="250"/>
-  <img src="assets/screenshot2.png" width="250"/>
-  <img src="assets/screenshot3.png" width="250"/>
+  <img width="220" src="https://github.com/user-attachments/assets/27bfcb40-9b1e-4a56-b86a-5c6eb9693bca" />
+  <img width="220" src="https://github.com/user-attachments/assets/880f203c-3d86-46b5-b4f5-365680e63bd1" />
+  <img width="220" src="https://github.com/user-attachments/assets/d85fb899-323d-42c1-b601-739ef3e59d22" />
+</p>
+
+<p align="center">
+    <img width="220" src="https://github.com/user-attachments/assets/0f0979dd-c3a0-4e98-ae0a-47e2f0b60598" />
+    <img width="220" src="https://github.com/user-attachments/assets/0dd2feac-97b4-4c68-b610-93f11538e805" />
+</p>
+
+### Desktop View 💻 
+
+<p align="center">
+  <img width="350" src="https://github.com/user-attachments/assets/e31be7a8-a03d-4ba3-8ad6-e6a2573394b8" />
+  <img width="350" src="https://github.com/user-attachments/assets/6942274b-a8fe-42f4-a445-ef1d988874f5" />
+
+</p>
+
+<p align="center">
+  <img width="350" src="https://github.com/user-attachments/assets/92a5161a-e7a1-472d-b0af-1e73e9ca93d3" />
+  <img width="350" src="https://github.com/user-attachments/assets/8aca446c-d34d-4152-85f6-bf9105214471" />
+
 </p>
 
 ---
 
-<h3><b>Demo (action)</b></h3>
+<h3><b>Demo (action) 🎬</b></h3>
 
 <p align="center">
-  <a href="https://your-demo-link.com">
-    <img src="https://img.shields.io/badge/Watch-Demo-black?style=for-the-badge&logo=youtube"/>
+  <a href="https://youtu.be/iy-p2-X0yrs">
+    <img src="https://img.shields.io/badge/YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white"/>
   </a>
 </p>
 
@@ -203,7 +224,7 @@ Follow these steps to run TAAL locally.
 
 ---
 
-## short note :) 🧃 
+<h3><b>short note :) 🧃</b></h3>
 
 - a really crazy app (imo), made just in some weeks
 - yea we did fight with GRADLE alot
