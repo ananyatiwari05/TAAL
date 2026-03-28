@@ -908,7 +908,7 @@ fun SoundPad(
                 }
             )
             .border(
-                if (stepIndex % 4 == 0) 2.dp else 0.dp,
+                -2.dp,
                 Color.White,
                 RoundedCornerShape(12.dp)
             )
@@ -1177,6 +1177,4 @@ fun RecordingsList(
             }
         }
     }
-
-
 }
