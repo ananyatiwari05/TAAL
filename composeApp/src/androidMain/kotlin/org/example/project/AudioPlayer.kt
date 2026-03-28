@@ -121,7 +121,7 @@ actual class AudioPlayer(context: Context) {
         return guitarNotes.getOrElse(index) { "guitar_c3" }
     }
 
-    fun getPianoNoteByIndex(index: Int): String {
+    actual fun getPianoNoteByIndex(index: Int): String {
         return pianoNotes.getOrElse(index) { "piano_c3" }
     }
 

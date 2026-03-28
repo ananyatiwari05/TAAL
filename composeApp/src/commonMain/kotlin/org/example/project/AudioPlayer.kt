@@ -5,4 +5,5 @@ expect class AudioPlayer {
     fun playImported(uri: String)
     fun setVolume(newVolume: Float)
     fun getGuitarNoteByIndex(index: Int): String
+    fun getPianoNoteByIndex(index: Int): String
 }

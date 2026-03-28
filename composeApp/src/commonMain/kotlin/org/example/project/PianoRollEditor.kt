@@ -43,7 +43,7 @@ val pianoNotes = listOf(
     "piano_b4.wav",
     "piano_c2.wav",
     "piano_c3.wav",
-    "piano_b4.wav",
+    "piano_c4.wav",
     "piano_c5.wav",
     "piano_d2.wav",
     "piano_d3.wav",
@@ -64,7 +64,9 @@ fun PianoRollEditor(
     state: PianoEditorState,
     audioPlayer: AudioPlayer,
     onSave: () -> Unit,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onPlayToggle: () -> Unit,
+//    isPlaying: Boolean
 ) {
 
     Column(
@@ -84,7 +86,7 @@ fun PianoRollEditor(
             }
 
             Row {
-                IconButton(onClick = {}) {
+                IconButton(onClick = onPlayToggle) {
                     Icon(Icons.Default.PlayArrow, "Play", tint = Color.White)
                 }
                 IconButton(onClick = onSave) {
