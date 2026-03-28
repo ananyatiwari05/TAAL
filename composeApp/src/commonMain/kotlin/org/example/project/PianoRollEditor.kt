@@ -80,7 +80,7 @@ fun PianoRollEditor(
         ) {
 
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, null)
+                Icon(Icons.Default.Close, null, tint = Color.White)
             }
 
             Row {

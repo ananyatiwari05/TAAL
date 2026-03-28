@@ -3,6 +3,7 @@ package org.example.project
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,6 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.text.style.LineHeightStyle
 
 @Composable
 fun GuitarBeatsEditor(
@@ -59,11 +63,15 @@ fun GuitarBeatsEditor(
             currentStep = (currentStep + 1) % editorState.cols
         }
     }
+    val horizontalScroll = rememberScrollState()
+    val verticalScroll = rememberScrollState()
 
     Box(
         modifier = Modifier
             .fillMaxWidth(0.95f)
             .fillMaxHeight(0.8f)
+            .verticalScroll(verticalScroll)
+            .horizontalScroll(horizontalScroll)
     ) {
 
         Column(
@@ -134,14 +142,15 @@ fun TopBar(
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
     ) {
 
         IconButton(onClick = onClose) {
             Icon(Icons.Default.Close, null, tint = Color.White)
         }
 
-        Row {
+        Row(
+            horizontalArrangement = Arrangement.End,
+        ) {
             IconButton(onClick = onPlay) {
                 Icon(Icons.Default.PlayArrow, null, tint = Color.White)
             }
@@ -163,11 +172,11 @@ fun TopBar(
 
 @Composable
 fun LeftPanel(rows: Int) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        repeat(rows) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        repeat(22) {
             Box(
                 modifier = Modifier
-                    .size(50.dp)
+                    .size(46.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(Color(0xFF555555))
             )
@@ -199,7 +208,7 @@ fun PatternGrid(
                                 }
                             )
                             .clickable {
-                                onToggle(rowIndex, colIndex)
+                                state.toggle(rowIndex, colIndex)
                             }
                     )
                 }

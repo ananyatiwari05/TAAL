@@ -8,6 +8,7 @@ val DrumRed = Color(0xFFB00020)
 val GuitarOrange = Color(0xFFFF9800)
 val SaxYellow = Color(0xFFFFEB3B)
 
+val PaleGray = Color(0xFF909EAE)
 val ElectricGuitarDGreen = Color(0xFF04420E)
 
 val violinPink = Color(0xFFFF00B7)

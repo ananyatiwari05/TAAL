@@ -64,8 +64,8 @@ import org.example.project.auth.AuthRepository
 import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.input.pointer.isSecondaryPressed
-import androidx.compose.ui.input.pointer.pointerInput
+
+
 
 
 @Composable
@@ -767,7 +767,11 @@ fun SoundGrid(
                             isEdited = tile.isEdited.value,
                             onClick = {
 
-                                activeTiles = activeTiles + tile.id
+                                activeTiles = if (tile.id in activeTiles) {
+                                    activeTiles - tile.id
+                                } else {
+                                    activeTiles + tile.id
+                                }
                                 val beat = tile.beat
 
                                 scope.launch {
@@ -836,6 +840,7 @@ fun SoundPad(
     onLongPress: () -> Unit
 ){
     var pressed by remember { mutableStateOf(false) }
+    var beatOn by remember { mutableStateOf(isEdited) }
 
     val animatedColor by animateColorAsState(
         if (isActive) Color.White else color,
@@ -846,7 +851,6 @@ fun SoundPad(
         targetValue = if (pressed) 0.92f else 1f,
         label = ""
     )
-
     Box(
         modifier = Modifier
             .aspectRatio(1f)
@@ -854,9 +858,9 @@ fun SoundPad(
             .clip(RoundedCornerShape(20.dp))
             .background(
                 when {
-                    isEdited -> Color.White.copy(alpha = 0.9f)
                     isPlayhead -> Color.White.copy(alpha = 0.25f)
                     isActive -> animatedColor
+                    isEdited -> PaleGray
                     else -> color
                 }
             )
