@@ -37,7 +37,7 @@ fun AddBeatDialog(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth(0.6f)
+            .fillMaxWidth(0.8f)
             .fillMaxHeight(0.6f)
             .background(Color.DarkGray, RoundedCornerShape(16.dp))
             .padding(10.dp)
