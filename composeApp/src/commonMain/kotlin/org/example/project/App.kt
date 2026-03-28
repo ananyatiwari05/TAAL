@@ -64,7 +64,8 @@ import org.example.project.auth.AuthRepository
 import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.selects.select
+
+
 
 
 @Composable
@@ -171,6 +172,8 @@ fun MusicPadScreen(
     var isEditorMode by remember { mutableStateOf(false) }
     var showBeatSelector by remember { mutableStateOf(false) }
     var showPianoEditor by remember { mutableStateOf(false) }
+    var pianoPlaying by remember { mutableStateOf(false) }
+    var pianoStep by remember { mutableStateOf(0) }
     var showDrumEditor by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     var selectedTile by remember { mutableStateOf<Tile?>(null) }
@@ -196,6 +199,42 @@ fun MusicPadScreen(
             Beat("b2", "Rock Beat", "rock.wav"),
             Beat("b3", "Jazz Beat", "jazz.wav")
         )
+    }
+
+    LaunchedEffect(pianoPlaying) {
+        if (!pianoPlaying) {
+            pianoStep = 0  // reset playhead when stopped
+            return@LaunchedEffect
+        }
+
+        val bpm = 60  // You can adjust to your metronome BPM
+        val stepDuration = 60000L / (bpm * 4)  // 16 steps per bar
+
+        while (pianoPlaying) {
+            val state = pianoEditorState ?: break  // Stop if no piano state
+
+            // Find active rows for this step
+            val activeRows = state.grid.mapIndexedNotNull { row, cols ->
+                if (cols[pianoStep]) row else null
+            }
+
+            // Play notes
+            activeRows.forEach { row ->
+                // Map rows to piano note names (adjust if you have more rows)
+                val notes = listOf(
+                    "piano_c4","piano_d4","piano_e4","piano_f4",
+                    "piano_g4","piano_a4","piano_b4","piano_c5"
+                )
+                val note = notes.getOrElse(row) { "piano_c4" }
+                audioPlayer.playSound(note)
+            }
+
+            // Update playhead in the UI
+            pianoEditorState?.playhead = pianoStep
+
+            delay(stepDuration)  // Wait for next step
+            pianoStep = (pianoStep + 1) % (pianoEditorState?.cols ?: 16)  // loop steps
+        }
     }
 
     fun addTileToBeatEditor(
@@ -361,12 +400,17 @@ fun MusicPadScreen(
                                 tileViewModel,
                                 selectedCategory!!,
                                 selectedTile!!.id,
-                                currentStep
+                                pianoStep
                             )
                             showPianoEditor = false
                             selectedTile!!.isEdited.value = true
+                            pianoPlaying = false
                         },
-                        onClose = { showPianoEditor = false }
+                        onClose = {
+                            showPianoEditor = false
+                            pianoPlaying = false
+                        },
+                        onPlayToggle = { pianoPlaying = !pianoPlaying }
                     )
                 }
             }
@@ -872,6 +916,18 @@ fun SoundPad(
                 onClick = { pressed = true; onClick() },
                 onLongClick = { onLongPress() }
             )
+
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+
+                        if (event.buttons.isSecondaryPressed) {
+                            onLongPress()
+                        }
+                    }
+                }
+            }
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
