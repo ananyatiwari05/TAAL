@@ -1,20 +1,43 @@
 package org.example.project
 
-val guitarNotesCount = 22
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
-data class GuitarEditorState(
-    val rows: Int = guitarNotesCount,
-    val cols: Int = 8,
-    val grid: MutableList<MutableList<Boolean>> = MutableList(guitarNotesCount) {
-        MutableList(8) { false }
+val guitarNotesCount = 44
+class GuitarEditorState
+{
+    val rows = guitarNotesCount
+
+    val cols = 16
+
+    var playheadGuitar by mutableStateOf(0)
+
+    var grid by mutableStateOf(List(rows){ MutableList(cols){ false} })
+
+    fun toggle(row: Int, col: Int) {
+        grid = grid.toMutableList().apply {
+            this[row] = this[row].toMutableList().apply {
+                this[col] = !this[col]
+            }
+        }
     }
-) {
+
+    fun clear() {
+        grid = List(rows) { MutableList(cols) { false } }
+    }
 
     fun deepCopy(): GuitarEditorState {
-        return GuitarEditorState(
-            rows = rows,
-            cols = cols,
-            grid = grid.map { it.toMutableList() }.toMutableList()
-        )
+        val newState = GuitarEditorState()
+
+        newState.grid = grid.map { row ->
+            row.toMutableList()
+        }
+
+        newState.playheadGuitar = playheadGuitar
+
+        return newState
     }
+
 }
