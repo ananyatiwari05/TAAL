@@ -64,8 +64,8 @@ import org.example.project.auth.AuthRepository
 import taal.composeapp.generated.resources.Res
 import kotlin.time.ExperimentalTime
 import androidx.compose.runtime.LaunchedEffect
-
-
+import androidx.compose.ui.input.pointer.isSecondaryPressed
+import androidx.compose.ui.input.pointer.pointerInput
 
 
 @Composable
@@ -869,6 +869,18 @@ fun SoundPad(
                 onClick = { pressed = true; onClick() },
                 onLongClick = { onLongPress() }
             )
+
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+
+                        if (event.buttons.isSecondaryPressed) {
+                            onLongPress()
+                        }
+                    }
+                }
+            }
             .padding(8.dp),
         contentAlignment = Alignment.Center
     ) {
