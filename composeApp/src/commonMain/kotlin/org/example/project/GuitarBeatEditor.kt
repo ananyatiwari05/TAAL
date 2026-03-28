@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.text.style.LineHeightStyle
+
 @Composable
 fun GuitarBeatsEditor(
     audioPlayer: AudioPlayer,
@@ -147,7 +149,7 @@ fun TopBar(
         }
 
         Row(
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.End,
         ) {
             IconButton(onClick = onPlay) {
                 Icon(Icons.Default.PlayArrow, null, tint = Color.White)
