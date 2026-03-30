@@ -5,7 +5,9 @@ expect class AudioExporter {
         state: BeatEditorState,
         categories: List<InstrumentCategory>,
         bpm: Int,
-        outputPath: String
+        outputPath: String,
+        durationSeconds: Int
+
     )
     fun exportMidi(
         state: BeatEditorState,

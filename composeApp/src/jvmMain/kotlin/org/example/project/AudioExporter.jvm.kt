@@ -22,12 +22,14 @@ actual class AudioExporter {
         state: BeatEditorState,
         categories: List<InstrumentCategory>,
         bpm: Int,
-        outputPath: String
+        outputPath: String,
+        durationSeconds: Int
     ) {
 
         val sampleRate = 48000
         val stepDurationSec = 60.0 / (bpm * 4)
-        val totalSteps = state.grid[0].size
+        val patternSteps = state.grid[0].size
+        val totalSteps = ((durationSeconds) / stepDurationSec).toInt()
         val tailSeconds = 8
         val totalSamples = (sampleRate * (stepDurationSec * totalSteps + tailSeconds)).toInt()
         val mixBuffer = FloatArray(totalSamples)
@@ -39,12 +41,13 @@ actual class AudioExporter {
 
                 println("STEP: $step | instrument: $instrumentIndex")
 
-                val tileId = state.grid[instrumentIndex][step] ?: continue
+                val actualStep = step % patternSteps
+                val tileId = state.grid[instrumentIndex][actualStep] ?: continue
                 val tile = category.tiles.find { it.id == tileId } ?: continue
                 val beat = tile.beat ?: continue
 
                 val startSample = (step * stepDurationSec * sampleRate).toInt()
-                val velocity = state.velocityGrid[instrumentIndex][step]
+                val velocity = state.velocityGrid[instrumentIndex][actualStep]
 
                 when {
                     beat.drumPattern != null -> {

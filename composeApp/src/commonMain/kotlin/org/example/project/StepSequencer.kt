@@ -1,7 +1,12 @@
 package org.example.project
 
 import kotlinx.coroutines.*
-
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 
 class StepSequencer(
     private val metronome: MetronomeEngine,
@@ -19,16 +24,35 @@ class StepSequencer(
 
     fun start() {
 
+        val loopCount = 8
+
         if (job != null) return
 
         job = scope.launch {
 
-            metronome.step.collect { step ->
+            val bpm = metronome.bpm
+            val stepDuration = 60000L / (bpm * 4)
 
-                playDrums(step)
-                playPianos(step)
-                playGuitar(step)
+            val maxSteps = listOf(
+                activeDrumPatterns.firstOrNull()?.cols ?: 0,
+                activePianoPatterns.firstOrNull()?.cols ?: 0,
+                activeGuitarPatterns.firstOrNull()?.cols ?: 0
+            ).maxOrNull() ?: 32
 
+            var step = 0
+
+            repeat(loopCount) {
+
+                for (i in 0 until maxSteps) {
+
+                    playDrums(step)
+                    playPianos(step)
+                    playGuitar(step)
+
+                    delay(stepDuration)
+
+                    step = (step + 1) % maxSteps
+                }
             }
         }
     }
@@ -73,6 +97,8 @@ class StepSequencer(
 
         activePianoPatterns.forEach { pattern ->
 
+            pattern.playhead = step % pattern.cols
+
             pattern.grid.forEachIndexed { row, steps ->
                 val safeStep = step % steps.size
 
@@ -80,7 +106,6 @@ class StepSequencer(
                     audioPlayer.playSound(pianoNotes[row])
                 }
             }
-
         }
     }
     private fun playGuitar(step: Int) {

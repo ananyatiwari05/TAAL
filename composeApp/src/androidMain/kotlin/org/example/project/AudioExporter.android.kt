@@ -5,6 +5,7 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.abs
 import dev.atsushieno.ktmidi.*
+import kotlinx.coroutines.launch
 
 actual class AudioExporter(private val context: Context) {
 
@@ -12,13 +13,15 @@ actual class AudioExporter(private val context: Context) {
         state: BeatEditorState,
         categories: List<InstrumentCategory>,
         bpm: Int,
-        outputPath: String
+        outputPath: String,
+        durationSeconds: Int
     ) {
 
         val sampleRate = 48000
         val stepDurationSec = 60.0 / (bpm * 4)
 
-        val totalSteps = state.grid[0].size
+        val patternSteps = state.grid[0].size
+        val totalSteps = (durationSeconds / stepDurationSec).toInt()
         val tailSeconds = 3
 
         val totalSamples = (sampleRate * (stepDurationSec * totalSteps + tailSeconds)).toInt()
@@ -30,13 +33,13 @@ actual class AudioExporter(private val context: Context) {
 
             for (step in 0 until totalSteps) {
 
-                val tileId = state.grid[instrumentIndex][step] ?: continue
+                val actualStep = step % patternSteps
+                val tileId = state.grid[instrumentIndex][actualStep] ?: continue
                 val tile = category.tiles.find { it.id == tileId } ?: continue
                 val beat = tile.beat ?: continue
 
                 val startSample = (step * stepDurationSec * sampleRate).toInt()
-                val velocity = state.velocityGrid[instrumentIndex][step]
-
+                val velocity = state.velocityGrid[instrumentIndex][actualStep]
                 when {
                     beat.drumPattern != null -> {
                         mixDrumPattern(beat.drumPattern, startSample, mixBuffer, sampleRate, velocity)
@@ -77,6 +80,12 @@ actual class AudioExporter(private val context: Context) {
 
         val safePath = getSafePath(File(outputPath).name)
         writeWav(mixBuffer, sampleRate, safePath)
+
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            android.widget.Toast
+                .makeText(context, "Saved to Downloads/TaalExports", android.widget.Toast.LENGTH_SHORT)
+                .show()
+        }
     }
 
     actual fun exportMidi(
@@ -317,19 +326,43 @@ actual class AudioExporter(private val context: Context) {
     }
 
     private fun getSafePath(fileName: String): String {
-        val dir = File(context.getExternalFilesDir(null), "taal_exports")
+
+        val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(
+            android.os.Environment.DIRECTORY_DOWNLOADS
+        )
+
+        val dir = File(downloadsDir, "TaalExports")
         if (!dir.exists()) dir.mkdirs()
+
         return File(dir, fileName).absolutePath
     }
 
     private val guitarNotes = listOf(
-        "guitar_a2.wav","guitar_a3.wav","guitar_a4.wav",
-        "guitar_b2.wav","guitar_b3.wav","guitar_b4.wav",
-        "guitar_c3.wav","guitar_c4.wav","guitar_c5.wav",
-        "guitar_d2.wav","guitar_d3.wav","guitar_d4.wav",
-        "guitar_e2.wav","guitar_e3.wav","guitar_e4.wav",
-        "guitar_f2.wav","guitar_f3.wav","guitar_f4.wav",
-        "guitar_g2.wav","guitar_g3.wav","guitar_g4.wav"
+
+
+        "guitar_a2.wav",
+        "guitar_b2.wav",
+        "guitar_c3.wav",
+        "guitar_d2.wav",
+        "guitar_e2.wav",
+        "guitar_f2.wav",
+        "guitar_g2.wav",
+
+        "guitar_a3.wav",
+        "guitar_b3.wav",
+        "guitar_c4.wav",
+        "guitar_d3.wav",
+        "guitar_e3.wav",
+        "guitar_f3.wav",
+        "guitar_g3.wav",
+
+        "guitar_a4.wav",
+        "guitar_b4.wav",
+        "guitar_c5.wav",
+        "guitar_d4.wav",
+        "guitar_e4.wav",
+        "guitar_f4.wav",
+        "guitar_g4.wav"
     )
 
     fun mixGuitarPattern(

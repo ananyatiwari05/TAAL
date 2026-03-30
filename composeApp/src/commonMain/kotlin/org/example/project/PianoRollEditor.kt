@@ -2,6 +2,8 @@ package org.example.project
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,9 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import org.example.project.AudioPlayer
 import org.example.project.PianoEditorState
+import androidx.compose.ui.input.pointer.pointerInput
+
 
 val pianoNotes = listOf(
     "piano_a2.wav",
@@ -66,7 +71,7 @@ fun PianoRollEditor(
     onSave: () -> Unit,
     onClose: () -> Unit,
     onPlayToggle: () -> Unit,
-//    isPlaying: Boolean
+   isPlaying: Boolean
 ) {
 
     Column(
@@ -87,12 +92,18 @@ fun PianoRollEditor(
 
             Row {
                 IconButton(onClick = onPlayToggle) {
-                    Icon(Icons.Default.PlayArrow, "Play", tint = Color.White)
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Close else Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = if (isPlaying) Color.Green else Color.White
+                    )
                 }
                 IconButton(onClick = onSave) {
                     Icon(Icons.Default.Save, "Save", tint = Color.White)
                 }
-                IconButton(onClick = {}){
+                IconButton(onClick = {
+                    state.clear()
+                }){
                     Icon(Icons.Default.Delete,"Delete", tint = Color.White)
                 }
                 IconButton(onClick = {}) {
@@ -133,6 +144,14 @@ fun StepMatrix(
             .fillMaxHeight()
             .verticalScroll(verticalScroll)
             .horizontalScroll(horizontalScroll)
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+
+                    horizontalScroll.dispatchRawDelta(-dragAmount.x)
+                    verticalScroll.dispatchRawDelta(-dragAmount.y)
+                }
+            }
     ) {
 
         Column {
@@ -147,9 +166,9 @@ fun StepMatrix(
 
                         val backgroundColor =
                             when {
-                                active && column == state.playhead -> Color.Yellow
+                                column == state.playhead && active -> Color(0xFF00FFAA)
+                                column == state.playhead -> Color.Yellow
                                 active -> Color(0xFFFF6666)
-                                column == state.playhead -> Color(0xFF666666)
                                 column % 16 == 0 -> Color(0xFF505050)
                                 column % 4 == 0 -> Color(0xFF3A3A3A)
                                 else -> Color(0xFF2E2E2E)

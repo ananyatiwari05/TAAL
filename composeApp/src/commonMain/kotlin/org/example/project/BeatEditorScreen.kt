@@ -6,18 +6,21 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -122,74 +125,97 @@ fun BeatEditorScreen(
 
                 val instrument = category.tiles.first().instrument
 
-                Row(
+                val rowHorizontalScroll = rememberScrollState()
+                val rowVerticalScroll = rememberScrollState()
+
+                Box(
                     modifier = Modifier
-                        .horizontalScroll(horizontalScroll)
-                        .height(70.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        .fillMaxWidth()
+                        .height(70.dp)
+                        .verticalScroll(rowVerticalScroll)
+                        .horizontalScroll(rowHorizontalScroll)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                rowHorizontalScroll.dispatchRawDelta(-dragAmount.x)
+                                rowVerticalScroll.dispatchRawDelta(-dragAmount.y)
+                            }
+                        }
                 ) {
 
-                    repeat(32) { stepIndex ->
+                    Row(
+                        modifier = Modifier.height(70.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
 
-                        val tileId = state.grid[instrumentIndex][stepIndex]
-                        val active = tileId != null
-                        val isPlayingStep = stepIndex == currentStep
+                        repeat(32) { stepIndex ->
 
-                        Box(
-                            modifier = Modifier
-                                .width(70.dp)
-                                .fillMaxHeight()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    when {
-                                        isPlayingStep -> Color.White.copy(alpha = 0.3f)
-                                        active -> instrument.color
-                                        else -> Color(0xFF555555)
-                                    }
-                                )
-                                .combinedClickable(
-                                    onClick = {
-                                        state.assign(instrumentIndex, stepIndex, selectedTileId)
-                                    },
-                                    onLongClick = {
-                                        val currentVelocity = state.velocityGrid[instrumentIndex][stepIndex]
-                                        val newVelocity = when {
-                                            currentVelocity > 0.75f -> 0.5f
-                                            currentVelocity > 0.5f -> 0.25f
-                                            else -> 1f
+                            val tileId = state.grid[instrumentIndex][stepIndex]
+                            val active = tileId != null
+                            val isPlayingStep = stepIndex == currentStep
+
+                            Box(
+                                modifier = Modifier
+                                    .width(70.dp)
+                                    .fillMaxHeight()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        when {
+                                            isPlayingStep -> Color.White.copy(alpha = 0.3f)
+                                            active -> instrument.color
+                                            else -> Color(0xFF555555)
                                         }
-                                        state.setVelocity(instrumentIndex, stepIndex, newVelocity)
-                                    }
-                                )
-                        )
+                                    )
+                                    .combinedClickable(
+                                        onClick = {
+                                            state.assign(instrumentIndex, stepIndex, selectedTileId)
+                                        },
+                                        onLongClick = {
+                                            val currentVelocity =
+                                                state.velocityGrid[instrumentIndex][stepIndex]
+                                            val newVelocity = when {
+                                                currentVelocity > 0.75f -> 0.5f
+                                                currentVelocity > 0.5f -> 0.25f
+                                                else -> 1f
+                                            }
+                                            state.setVelocity(
+                                                instrumentIndex,
+                                                stepIndex,
+                                                newVelocity
+                                            )
+                                        }
+                                    )
+                            )
+                        }
                     }
                 }
             }
         }
-    }
-    if (showAddDialog) {
-        Dialog(onDismissRequest = { showAddDialog = false }) {
+        if (showAddDialog) {
+            Dialog(onDismissRequest = { showAddDialog = false }) {
 
-            AddBeatDialog(
-                categories = categories,
-                onSelectTile = { tile ->
+                AddBeatDialog(
+                    categories = categories,
+                    onSelectTile = { tile ->
 
-                    val category = categories.first {
-                        it.tiles.contains(tile)
-                    }
+                        val category = categories.first {
+                            it.tiles.contains(tile)
+                        }
 
-                    tileViewModel.addTile(
-                        categoryTitle = category.title,
-                        baseTile = tile,
-                        beat = tile.beat!!
-                    )
+                        tileViewModel.addTile(
+                            categoryTitle = category.title,
+                            baseTile = tile,
+                            beat = tile.beat!!
+                        )
 
-                    selectedTileId = tile.id
-                    showAddDialog = false
-                },
-                onDismiss = { showAddDialog = false }
-            )
+                        selectedTileId = tile.id
+                        showAddDialog = false
+                    },
+                    onDismiss = { showAddDialog = false }
+                )
+            }
         }
+
     }
 
 }

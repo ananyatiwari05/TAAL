@@ -9,53 +9,43 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 
 @Composable
-fun PianoBeatsEditor(
-    audioPlayer: AudioPlayer,
+fun PianoBeatEditor(
     state: PianoEditorState,
-    onSave: (PianoEditorState) -> Unit,
+    audioPlayer: AudioPlayer,
+    onSave: () -> Unit,
     onClose: () -> Unit
 ) {
-    var editorState by remember { mutableStateOf(state.deepCopy()) }
 
     var playing by remember { mutableStateOf(false) }
-    var currentStep by remember { mutableStateOf(0) }
 
-    // ✅ Playback loop
     LaunchedEffect(playing) {
 
-        if (!playing) {
-            currentStep = 0
-            return@LaunchedEffect
-        }
+        if (!playing) return@LaunchedEffect
 
         val bpm = 60
         val stepDuration = 60000L / (bpm * 4)
 
         while (playing) {
 
-            val activeRows = editorState.grid.mapIndexedNotNull { row, cols ->
-                if (cols[currentStep]) row else null
-            }
+            state.grid.forEachIndexed { row, steps ->
 
-            activeRows.forEach { row ->
-                val note = audioPlayer.getPianoNoteByIndex(row)
-                audioPlayer.playSound(note)
+                if (steps[state.playhead]) {
+                    audioPlayer.playSound(pianoNotes[row])
+                }
             }
-
-            // ✅ sync playhead with UI
-            editorState.playhead = currentStep
 
             delay(stepDuration)
-            currentStep = (currentStep + 1) % editorState.cols
+
+            state.playhead = (state.playhead + 1) % state.cols
         }
     }
 
-    // ✅ Pass control to UI
     PianoRollEditor(
-        state = editorState,
+        state = state,
         audioPlayer = audioPlayer,
-        onSave = { onSave(editorState) },
+        onSave = onSave,
         onClose = onClose,
-        onPlayToggle = { playing = !playing }
+        onPlayToggle = { playing = !playing },
+        isPlaying = playing
     )
 }
