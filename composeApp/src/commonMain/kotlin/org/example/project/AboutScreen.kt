@@ -138,6 +138,7 @@ fun AboutPage(onClose: () -> Unit) {
                 color = Color(0xFF64B5F6),
                 fontSize = 13.sp,
                 modifier = Modifier.clickable {
+                    openUrl("https://github.com/Tanishq172006/TAAL")
                 }
             )
 

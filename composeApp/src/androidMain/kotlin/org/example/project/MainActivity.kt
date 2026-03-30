@@ -51,8 +51,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         AppContextHolder.context = applicationContext
-
-
+        appContext = applicationContext
         AudioImporter.currentActivity = this
 
         audioImporter = AudioImporter()
