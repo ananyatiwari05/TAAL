@@ -977,7 +977,6 @@ fun SoundPad(
             .clip(RoundedCornerShape(20.dp))
             .background(
                 when {
-                    isEdited -> Color.White.copy(alpha = 0.9f)
                     isPlayhead -> Color.White.copy(alpha = 0.25f)
                     isActive -> animatedColor
                     isEdited -> PaleGray

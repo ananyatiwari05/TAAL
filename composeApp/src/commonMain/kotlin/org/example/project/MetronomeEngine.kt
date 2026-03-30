@@ -15,7 +15,7 @@ class MetronomeEngine {
     private var timerJob: Job? = null
     private var startMark = TimeSource.Monotonic.markNow()
 
-    var bpm = 100
+    var bpm = 120
     var swing = 0f
 
     private val _step = MutableStateFlow(0)
