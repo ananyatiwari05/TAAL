@@ -98,34 +98,38 @@ android {
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-
         applicationId = "org.example.project"
-
         minSdk = libs.versions.android.minSdk.get().toInt()
-
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+    signingConfigs {
+        create("release") {
+            storeFile = file("../taal-keystore.jks")
+            storePassword = "Tanishq172005"
+            keyAlias = "taal-key"
+            keyPassword = "Tanishq172005"
         }
     }
 
     buildTypes {
-
         getByName("release") {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
     compileOptions {
-
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+android.applicationVariants.all {
+    outputs.all {
+        val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+        output.outputFileName = "TAAL-v${versionName}.apk"
     }
 }
 
@@ -138,7 +142,6 @@ compose.desktop {
     application {
 
         mainClass = "org.example.project.MainKt"
-        javaHome = "D:/Development/JDK"
         nativeDistributions {
 
             targetFormats(
@@ -148,7 +151,7 @@ compose.desktop {
             )
 
             packageName = "TAAL"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
 
             linux {
                 iconFile.set(project.file("src/jvmMain/resources/logo.png"))
@@ -165,7 +168,9 @@ compose.desktop {
             buildTypes.release.proguard {
                 isEnabled.set(false)
             }
+
         }
+
     }
 }
 sqldelight {
